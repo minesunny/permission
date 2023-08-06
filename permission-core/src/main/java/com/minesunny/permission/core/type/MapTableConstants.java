@@ -1,0 +1,36 @@
+/*
+ * Copyright 2023 the original author or authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ */
+package com.minesunny.permission.core.type;
+
+public interface MapTableConstants {
+    String ROLE_USER = "t_role_user_map";
+
+    String ORG_UNIT_USER = "t_org_unit_user_map";
+
+    String USER_ORG_UNIT = "t_user_org_unit_map";
+
+    String POST_USR = "t_post_user_map";
+
+    String ROLE_PERMISSION = "t_role_permission_map";
+
+    String POST_USER = "t_post_user_map";
+
+    String PERMISSION_RESOURCE = "t_permission_resource_map";
+    String PERMISSION_OPERATION = "t_permission_operation_map";
+
+}
