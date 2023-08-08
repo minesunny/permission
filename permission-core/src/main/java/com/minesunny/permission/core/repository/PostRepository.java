@@ -19,7 +19,6 @@ package com.minesunny.permission.core.repository;
 
 import com.minesunny.permission.core.entity.actor.Post;
 import org.springframework.data.jpa.repository.support.JpaRepositoryImplementation;
-import org.springframework.stereotype.Repository;
 
 public interface PostRepository extends JpaRepositoryImplementation<Post, Long> {
 }

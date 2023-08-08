@@ -3,7 +3,6 @@ package com.minesunny.permission.core.manager.impl;
 import com.minesunny.jpa.MineSpecification;
 import com.minesunny.jpa.exception.ServiceException;
 import com.minesunny.jpa.manager.MapMgr;
-import com.minesunny.jpa.uid.repository.WorkNodeRepository;
 import com.minesunny.permission.core.entity.Role;
 import com.minesunny.permission.core.entity.Session;
 import com.minesunny.permission.core.entity.actor.User;

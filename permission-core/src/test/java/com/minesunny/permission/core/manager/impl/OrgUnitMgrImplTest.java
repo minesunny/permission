@@ -10,7 +10,6 @@ import com.minesunny.permission.core.manager.AdminMgr;
 import com.minesunny.permission.core.manager.OrgUnitMgr;
 import com.minesunny.permission.core.type.RBACEntityConstants;
 import jakarta.persistence.EntityManager;
-import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -21,7 +20,6 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import java.util.Optional;
-import java.util.Set;
 
 @DataJpaTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -85,24 +83,24 @@ class OrgUnitMgrImplTest {
 
     @Test
     void bindPost() throws ServiceException {
-        Assertions.assertThrows(ValidationException.class,()->orgUnitMgr.bindPost(RBACEntityConstants.POST,
+        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.bindPost(RBACEntityConstants.POST,
                 RBACEntityConstants.USER));
 
-        Assertions.assertThrows(ValidationException.class,()->orgUnitMgr.bindPost(RBACEntityConstants.NOT_EXIST_POST,
+        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.bindPost(RBACEntityConstants.NOT_EXIST_POST,
                 RBACEntityConstants.USER));
 
-        Assertions.assertThrows(ValidationException.class,()->orgUnitMgr.bindPost(RBACEntityConstants.NOT_EXIST_POST,
+        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.bindPost(RBACEntityConstants.NOT_EXIST_POST,
                 RBACEntityConstants.NOT_EXIST_USER));
 
         Post post = Post.builder().build();
         Post savedPost = orgUnitMgr.addPost(post);
-        Assertions.assertThrows(ValidationException.class,()->orgUnitMgr.bindPost(savedPost,
+        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.bindPost(savedPost,
                 RBACEntityConstants.NOT_EXIST_USER));
         User user = User.builder().build();
         User savedUser = adminMgr.addUser(user);
 
         Assertions.assertDoesNotThrow(() -> orgUnitMgr.bindPost(savedPost, savedUser));
-        Assertions.assertThrows(ValidationException.class,()->orgUnitMgr.bindPost(savedPost,
+        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.bindPost(savedPost,
                 savedUser));
         Optional<Post> optionalPost = orgUnitMgr.readPost(savedPost);
         Assertions.assertTrue(optionalPost.isPresent());
@@ -112,22 +110,22 @@ class OrgUnitMgrImplTest {
 
     @Test
     void unbindPost() throws ServiceException {
-        Assertions.assertThrows(ValidationException.class,()->orgUnitMgr.unbindPost(RBACEntityConstants.POST,
+        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.unbindPost(RBACEntityConstants.POST,
                 RBACEntityConstants.USER));
 
-        Assertions.assertThrows(ValidationException.class,()->orgUnitMgr.unbindPost(RBACEntityConstants.NOT_EXIST_POST,
+        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.unbindPost(RBACEntityConstants.NOT_EXIST_POST,
                 RBACEntityConstants.USER));
 
-        Assertions.assertThrows(ValidationException.class,()->orgUnitMgr.unbindPost(RBACEntityConstants.NOT_EXIST_POST,
+        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.unbindPost(RBACEntityConstants.NOT_EXIST_POST,
                 RBACEntityConstants.NOT_EXIST_USER));
 
         Post post = Post.builder().build();
         Post savedPost = orgUnitMgr.addPost(post);
-        Assertions.assertThrows(ValidationException.class,()->orgUnitMgr.unbindPost(savedPost,
+        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.unbindPost(savedPost,
                 RBACEntityConstants.NOT_EXIST_USER));
         User user = User.builder().build();
         User savedUser = adminMgr.addUser(user);
-        Assertions.assertThrows(ValidationException.class,()->orgUnitMgr.unbindPost(savedPost,
+        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.unbindPost(savedPost,
                 savedUser));
         Assertions.assertDoesNotThrow(() -> orgUnitMgr.bindPost(savedPost, savedUser));
         Optional<Post> optionalPost = orgUnitMgr.readPost(savedPost);
