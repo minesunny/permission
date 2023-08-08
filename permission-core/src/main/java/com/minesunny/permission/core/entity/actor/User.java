@@ -17,11 +17,10 @@
  */
 package com.minesunny.permission.core.entity.actor;
 
-import com.minesunny.jpa.entity.BaseEntity;
+import com.minesunny.jpa.entity.CachedIdEntity;
 import com.minesunny.permission.core.entity.Role;
 import com.minesunny.permission.core.type.GenderType;
 import com.minesunny.permission.core.type.RegisterType;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Table;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -39,15 +38,12 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "t_user")
-@SQLDelete(sql = "update t_user set delete_at = current_timestamp where id in (?) and delete_at is null")
+@SQLDelete(sql = "update t_user set delete_at = current_timestamp,version = ?1 where id in (?2) and delete_at is null")
 @Where(clause = "delete_at is null")
 @Getter
 @Setter
-public class User extends BaseEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "id", nullable = false)
-    private Long id;
+public class User extends CachedIdEntity {
+
 
     @Column(name = "description")
     @Comment(value = "description")
@@ -80,20 +76,23 @@ public class User extends BaseEntity {
     @Column(name = "register_type")
     private RegisterType registerType;
 
-    @ManyToMany(mappedBy = "users")
-    @Fetch(FetchMode.SUBSELECT)
+    @ManyToMany(mappedBy = "users", targetEntity = OrgUnit.class)
+    @Fetch(FetchMode.SELECT)
     private Set<OrgUnit> orgUnits;
 
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "t_user_org_unit_map",
             joinColumns = @JoinColumn(name = "org_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"))
+    @Fetch(FetchMode.SELECT)
     private Set<OrgUnit> managerOrgUnits;
 
-    @ManyToOne(targetEntity = OrgUnit.class)
-    @Fetch(FetchMode.JOIN)
+    @ManyToOne(targetEntity = Post.class)
+    @Fetch(FetchMode.SELECT)
     private Post post;
+
     @ManyToMany(mappedBy = "users", targetEntity = Role.class)
+    @Fetch(FetchMode.SELECT)
     private Set<Role> roles;
 }

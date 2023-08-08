@@ -18,7 +18,7 @@
 package com.minesunny.permission.core.manager;
 
 
-import com.minesunny.jpa.ServiceException;
+import com.minesunny.jpa.exception.ServiceException;
 import com.minesunny.permission.core.entity.Role;
 import com.minesunny.permission.core.entity.actor.User;
 import com.minesunny.permission.core.entity.perm.Permission;

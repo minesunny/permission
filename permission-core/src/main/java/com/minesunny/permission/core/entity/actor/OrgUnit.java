@@ -18,7 +18,7 @@
 package com.minesunny.permission.core.entity.actor;
 
 
-import com.minesunny.jpa.entity.BaseEntity;
+import com.minesunny.jpa.entity.CachedIdEntity;
 import com.minesunny.permission.core.type.OrgType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -27,6 +27,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.Comment;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.SQLDelete;
 
 import java.util.Set;
@@ -38,13 +40,8 @@ import java.util.Set;
 @Table(name = "t_org_unit")
 @Getter
 @Setter
-@SQLDelete(sql = "update t_org_unit set delete_at = current_timestamp where delete_at is null")
-public class OrgUnit extends BaseEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "id", nullable = false)
-    private Long id;
-
+@SQLDelete(sql = "update t_org_unit set delete_at = current_timestamp,version = ?1 where id in (?2) and delete_at is null")
+public class OrgUnit extends CachedIdEntity {
 
     @Column(name = "org_name")
     @Comment(value = "org name")
@@ -66,12 +63,14 @@ public class OrgUnit extends BaseEntity {
 
 
     @ManyToMany(mappedBy = "managerOrgUnits", targetEntity = User.class)
+    @Fetch(FetchMode.SELECT)
     private Set<User> managerUsers;
 
     @ManyToMany
     @JoinTable(name = "t_org_unit_user_map",
             joinColumns = @JoinColumn(name = "org_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"))
+    @Fetch(FetchMode.SELECT)
     private Set<User> users;
 
 

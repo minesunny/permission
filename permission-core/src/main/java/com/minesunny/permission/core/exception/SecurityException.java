@@ -20,7 +20,7 @@
 package com.minesunny.permission.core.exception;
 
 
-import com.minesunny.jpa.ServiceException;
+import com.minesunny.jpa.exception.ServiceException;
 
 
 public class SecurityException extends ServiceException {

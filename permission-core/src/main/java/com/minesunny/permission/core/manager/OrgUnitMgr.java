@@ -17,11 +17,11 @@
  */
 package com.minesunny.permission.core.manager;
 
-import com.minesunny.jpa.ServiceException;
+import com.minesunny.jpa.exception.ServiceException;
 import com.minesunny.permission.core.entity.actor.OrgUnit;
+import com.minesunny.permission.core.entity.actor.Post;
 import com.minesunny.permission.core.entity.actor.User;
 import com.minesunny.permission.core.entity.sdt.OrgSdtNode;
-import com.minesunny.permission.core.entity.actor.Post;
 import jakarta.transaction.Transactional;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,9 +65,12 @@ public interface OrgUnitMgr {
 
     void unbindOrgUnit(@NotNull User user, @NotNull OrgUnit orgUnit) throws ServiceException;
 
-    void bindOrgUnit(@NotNull OrgSdtNode childOrgNode, @NotNull OrgSdtNode parentOrgNode) throws ServiceException;
+    void bindOrgUnitNode(@NotNull OrgSdtNode childOrgNode, @NotNull OrgSdtNode parentOrgNode) throws ServiceException;
 
-    void unbindOrgUnit(@NotNull OrgSdtNode childOrgNode) throws ServiceException;
+    void unbindOrgUnitNode(@NotNull OrgSdtNode childOrgNode) throws ServiceException;
 
+    void bindManagerUser(@NotNull User user, @NotNull OrgUnit orgUnit) throws ServiceException;
+
+    void unbindManagerUser(@NotNull User user, @NotNull OrgUnit orgUnit) throws ServiceException;
 
 }

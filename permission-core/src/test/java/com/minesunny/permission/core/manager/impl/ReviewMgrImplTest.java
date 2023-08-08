@@ -17,8 +17,8 @@
  */
 package com.minesunny.permission.core.manager.impl;
 
-import com.minesunny.jpa.ServiceException;
 import com.minesunny.jpa.autoconfigure.BaseJpaAutoConfiguration;
+import com.minesunny.jpa.exception.ServiceException;
 import com.minesunny.permission.core.autoconfigure.PermissionAutoConfiguration;
 import com.minesunny.permission.core.entity.Role;
 import com.minesunny.permission.core.entity.actor.User;
@@ -26,10 +26,7 @@ import com.minesunny.permission.core.entity.perm.Permission;
 import com.minesunny.permission.core.exception.ValidationException;
 import com.minesunny.permission.core.manager.AdminMgr;
 import com.minesunny.permission.core.manager.ReviewMgr;
-import com.minesunny.permission.core.manager.impl.AdminMgrImpl;
-import com.minesunny.permission.core.manager.impl.ReviewMgrImpl;
 import com.minesunny.permission.core.type.RBACEntityConstants;
-import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,8 +34,6 @@ import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.jdbc.EmbeddedDatabaseConnection;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.annotation.Commit;
 
 import java.util.List;
@@ -50,7 +45,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.AUTO_CONFIGURED, connection =
         EmbeddedDatabaseConnection.H2)
-@ImportAutoConfiguration({PermissionAutoConfiguration.class,BaseJpaAutoConfiguration.class})
+@ImportAutoConfiguration({PermissionAutoConfiguration.class, BaseJpaAutoConfiguration.class})
 class ReviewMgrImplTest {
     @Autowired
     private AdminMgr adminMgr;

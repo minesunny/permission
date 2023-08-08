@@ -1,6 +1,6 @@
 package com.minesunny.permission.core.manager.impl;
 
-import com.minesunny.jpa.ServiceException;
+import com.minesunny.jpa.exception.ServiceException;
 import com.minesunny.jpa.manager.MapMgr;
 import com.minesunny.permission.core.entity.Role;
 import com.minesunny.permission.core.entity.actor.User;
@@ -67,11 +67,6 @@ public class AdminMgrImpl implements AdminMgr {
     public void deleteUser(@NotNull User user) throws ServiceException {
         if (Objects.isNull(user.getId())) {
             throw new ValidationException("[deleteUser]:    The RBAC user entity's id is required and cannot be null");
-        }
-        Long userId = user.getId();
-        Optional<User> findUser = userRepository.findById(userId);
-        if (findUser.isEmpty()) {
-            return;
         }
         Map<String, List<Long>> map = new HashMap<>();
         map.put("user_id", List.of(user.getId()));
@@ -214,7 +209,6 @@ public class AdminMgrImpl implements AdminMgr {
             throw new ValidationException("[deletePermission]:    The RBAC permission entity's id is required and cannot be null");
         }
         Long permissionId = permission.getId();
-        // delete permission map with role;
 
         Map<String, List<Long>> map = new HashMap<>();
         map.put("permission_id", List.of(permission.getId()));

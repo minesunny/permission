@@ -17,12 +17,12 @@
  */
 package com.minesunny.permission.core.entity.auth;
 
-import com.minesunny.jpa.entity.BaseEntity;
+import com.minesunny.jpa.entity.CachedIdEntity;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @NoArgsConstructor
 @SuperBuilder
-public class Auth extends BaseEntity {
+public class Auth extends CachedIdEntity {
 
 }

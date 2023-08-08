@@ -1,6 +1,6 @@
 //package com.minesunny.query.permission.core.entity;
 //
-//import com.minesunny.jpa.entity.BaseEntity;
+//import com.minesunny.jpa.entity.CachedIdEntity;
 //import com.minesunny.query.permission.core.type.AuthType;
 //import jakarta.persistence.*;
 //import lombok.AllArgsConstructor;
@@ -13,11 +13,11 @@
 //@SuperBuilder
 //@NoArgsConstructor
 //@AllArgsConstructor
-//@SQLDelete(sql = "update t_audit_auth set delete_at = current_timestamp where delete_at is null")
+//@SQLDelete(sql = "update t_audit_auth set delete_at = current_timestamp,version = ?1 where id in (?2) and delete_at is null")
 //@Where(clause = "delete_at is null")
 //@Entity
 //@Table(name = "t_audit_auth")
-//public class AuditAuth extends BaseEntity {
+//public class AuditAuth extends CachedIdEntity {
 //    @Id
 //    @GeneratedValue(strategy = GenerationType.AUTO)
 //    @Column(name = "id", nullable = false)

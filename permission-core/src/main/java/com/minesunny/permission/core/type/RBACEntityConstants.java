@@ -17,11 +17,10 @@
  */
 package com.minesunny.permission.core.type;
 
-import com.minesunny.jpa.entity.BaseEntity;
-import com.minesunny.permission.core.entity.actor.OrgUnit;
-import com.minesunny.permission.core.entity.actor.User;
 import com.minesunny.permission.core.entity.Role;
+import com.minesunny.permission.core.entity.actor.OrgUnit;
 import com.minesunny.permission.core.entity.actor.Post;
+import com.minesunny.permission.core.entity.actor.User;
 import com.minesunny.permission.core.entity.perm.Operation;
 import com.minesunny.permission.core.entity.perm.Permission;
 
@@ -48,5 +47,5 @@ public interface RBACEntityConstants {
 
     Post POST = new Post();
 
-    BaseEntity OPERATION = Operation.builder().build();
+    Operation OPERATION = Operation.builder().build();
 }

@@ -17,8 +17,8 @@
  */
 package com.minesunny.permission.core.manager.impl;
 
-import com.minesunny.jpa.ServiceException;
 import com.minesunny.jpa.autoconfigure.BaseJpaAutoConfiguration;
+import com.minesunny.jpa.exception.ServiceException;
 import com.minesunny.permission.core.autoconfigure.PermissionAutoConfiguration;
 import com.minesunny.permission.core.entity.Role;
 import com.minesunny.permission.core.entity.actor.User;
@@ -30,6 +30,7 @@ import com.minesunny.permission.core.exception.ValidationException;
 import com.minesunny.permission.core.manager.AdminMgr;
 import com.minesunny.permission.core.manager.ReviewMgr;
 import com.minesunny.permission.core.type.RBACEntityConstants;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -38,7 +39,6 @@ import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.jdbc.EmbeddedDatabaseConnection;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.Commit;
 
 import java.util.HashSet;
@@ -50,8 +50,10 @@ import java.util.Set;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.AUTO_CONFIGURED, connection =
         EmbeddedDatabaseConnection.H2)
-@ImportAutoConfiguration({PermissionAutoConfiguration.class,BaseJpaAutoConfiguration.class})
+@ImportAutoConfiguration({PermissionAutoConfiguration.class, BaseJpaAutoConfiguration.class})
 class AdminMgrImplTest {
+    @Autowired
+    EntityManager entityManager;
     @Autowired
     private AdminMgr adminMgr;
     @Autowired
@@ -68,7 +70,6 @@ class AdminMgrImplTest {
                 () -> adminMgr.addUser(addUser));
     }
 
-
     @Test
     @Commit
     void testUpdateUser() throws ServiceException {
@@ -83,14 +84,12 @@ class AdminMgrImplTest {
         Assertions.assertEquals(adminMgr.updateUser(addUser).getDescription(), "update user");
     }
 
-
     @Test
     @Commit
     void testDeleteUser() throws ServiceException {
         User addUser = adminMgr.addUser(new User());
         adminMgr.deleteUser(addUser);
         Assertions.assertTrue(reviewMgr.readUser(addUser).isEmpty());
-
     }
 
 
@@ -247,7 +246,6 @@ class AdminMgrImplTest {
     void testGrantPermission() throws ServiceException {
 
 
-
         Assertions.assertThrows(ValidationException.class,
                 () -> adminMgr.grantPermission(RBACEntityConstants.NOT_EXIST_PERMISSION,
                         RBACEntityConstants.NOT_EXIST_ROLE));
@@ -275,7 +273,6 @@ class AdminMgrImplTest {
     @Test
     @Commit
     void testRevokePermission() throws ServiceException {
-
 
 
         Assertions.assertThrows(ValidationException.class,

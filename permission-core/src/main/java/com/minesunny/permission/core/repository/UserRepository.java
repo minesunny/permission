@@ -29,7 +29,6 @@ import org.springframework.stereotype.Repository;
 import java.util.Collection;
 import java.util.Optional;
 
-@Repository
 public interface UserRepository extends JpaRepositoryImplementation<User, Long> {
     @Query("select u from User u inner join u.roles roles where u.id = :id and roles.id = :id1")
     Optional<User> findByIdAndRoles_Id(@Param("id") @NonNull Long id, @Param("id1") @NonNull Long id1);

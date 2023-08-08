@@ -19,6 +19,7 @@ package com.minesunny.permission.core.repository;
 
 import com.minesunny.permission.core.entity.actor.OrgUnit;
 import org.springframework.data.jpa.repository.support.JpaRepositoryImplementation;
+import org.springframework.stereotype.Repository;
 
 public interface OrgRepository extends JpaRepositoryImplementation<OrgUnit, Long> {
 }

@@ -2,18 +2,18 @@ package com.minesunny.permission.core.manager.impl;
 
 import com.minesunny.jpa.MineSpecification;
 import com.minesunny.jpa.entity.SdtNode;
-import com.minesunny.jpa.ServiceException;
+import com.minesunny.jpa.exception.ServiceException;
 import com.minesunny.jpa.manager.MapMgr;
 import com.minesunny.jpa.manager.SdtNodeMgr;
-import com.minesunny.permission.core.entity.sdt.OrgSdtNode;
-import com.minesunny.permission.core.exception.ValidationException;
-import com.minesunny.permission.core.repository.OrgRepository;
-import com.minesunny.permission.core.repository.PostRepository;
 import com.minesunny.permission.core.entity.actor.OrgUnit;
 import com.minesunny.permission.core.entity.actor.Post;
 import com.minesunny.permission.core.entity.actor.User;
+import com.minesunny.permission.core.entity.sdt.OrgSdtNode;
+import com.minesunny.permission.core.exception.ValidationException;
 import com.minesunny.permission.core.manager.OrgUnitMgr;
 import com.minesunny.permission.core.manager.ReviewMgr;
+import com.minesunny.permission.core.repository.OrgRepository;
+import com.minesunny.permission.core.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.aop.framework.AopContext;
@@ -64,11 +64,6 @@ public class OrgUnitMgrImpl implements OrgUnitMgr {
     public void deletePost(@NotNull Post post) throws ServiceException {
         if (Objects.isNull(post.getId())) {
             throw new ValidationException("[deletePost]:    The post entity's id is required and cannot be null");
-        }
-        Long userId = post.getId();
-        Optional<Post> findPost = postRepository.findById(userId);
-        if (findPost.isEmpty()) {
-            return;
         }
 
         Map<String, List<Long>> map = new HashMap<>();
@@ -178,10 +173,6 @@ public class OrgUnitMgrImpl implements OrgUnitMgr {
         if (Objects.isNull(orgUnit.getId())) {
             throw new ValidationException("[deleteOrgUnit]:    The orgUnit entity's id is required and cannot be null");
         }
-        Optional<OrgUnit> findOrgUnit = orgRepository.findById(orgUnit.getId());
-        if (findOrgUnit.isEmpty()) {
-            return;
-        }
         Map<String, List<Long>> map = new HashMap<>();
         map.put("org_id", List.of(orgUnit.getId()));
         mapMgr.delete(ORG_UNIT_USER, map);
@@ -264,7 +255,7 @@ public class OrgUnitMgrImpl implements OrgUnitMgr {
     }
 
     @Override
-    public void bindOrgUnit(@NotNull OrgSdtNode childOrgNode, @NotNull OrgSdtNode parentOrgNode) throws ServiceException {
+    public void bindOrgUnitNode(@NotNull OrgSdtNode childOrgNode, @NotNull OrgSdtNode parentOrgNode) throws ServiceException {
         if (Objects.isNull(childOrgNode.getNodeId())) {
             throw new ValidationException("[bindOrgUnit]:    The childOrgNode entity's nodeId is required and cannot be null");
         }
@@ -289,7 +280,7 @@ public class OrgUnitMgrImpl implements OrgUnitMgr {
     }
 
     @Override
-    public void unbindOrgUnit(@NotNull OrgSdtNode childOrgNode) throws ServiceException {
+    public void unbindOrgUnitNode(@NotNull OrgSdtNode childOrgNode) throws ServiceException {
         if (Objects.isNull(childOrgNode.getId())) {
             throw new ValidationException("[unbindOrgUnit]:    The childOrgNode entity is not exist");
         }
@@ -298,5 +289,55 @@ public class OrgUnitMgrImpl implements OrgUnitMgr {
             throw new ValidationException("[unbindOrgUnit]:    The childOrgNode entity is not exist");
         }
         nodeMgr.unbindSdtNode(optionalChildSdtNode.get());
+    }
+
+    @Override
+    public void bindManagerUser(@NotNull User user, @NotNull OrgUnit orgUnit) throws ServiceException {
+        if (Objects.isNull(user.getId())) {
+            throw new ValidationException("[bindManagerUser]:    The user entity's id is required and cannot be null");
+        }
+        if (Objects.isNull(orgUnit.getId())) {
+            throw new ValidationException("[bindManagerUser]:    The orgUnit entity's id is required and cannot be null");
+        }
+        Optional<OrgUnit> findOrgUnit = orgRepository.findById(orgUnit.getId());
+        if (findOrgUnit.isEmpty()) {
+            throw new ValidationException("[bindManagerUser]:    The orgUnit entity's id is not exist");
+        }
+        Optional<User> findUser = reviewMgr.readUser(user);
+        if (findUser.isEmpty()) {
+            throw new ValidationException("[bindManagerUser]:    The user entity's id is not exist");
+        }
+        Map<String, List<Long>> map = new HashMap<>();
+        map.put("org_id", List.of(orgUnit.getId()));
+        map.put("user_id", List.of(orgUnit.getId()));
+        if (mapMgr.exist(USER_ORG_UNIT, map)) {
+            throw new ValidationException("[bindManagerUser]:    The manager user has bind with orgUnit");
+        }
+        mapMgr.save(USER_ORG_UNIT, map);
+    }
+
+    @Override
+    public void unbindManagerUser(@NotNull User user, @NotNull OrgUnit orgUnit) throws ServiceException {
+        if (Objects.isNull(user.getId())) {
+            throw new ValidationException("[unbindManagerUser]:    The user entity's id is required and cannot be null");
+        }
+        if (Objects.isNull(orgUnit.getId())) {
+            throw new ValidationException("[unbindManagerUser]:    The orgUnit entity's id is required and cannot be null");
+        }
+        Optional<OrgUnit> findOrgUnit = orgRepository.findById(orgUnit.getId());
+        if (findOrgUnit.isEmpty()) {
+            throw new ValidationException("[unbindManagerUser]:    The orgUnit entity's id is not exist");
+        }
+        Optional<User> findUser = reviewMgr.readUser(user);
+        if (findUser.isEmpty()) {
+            throw new ValidationException("[unbindManagerUser]:    The user entity's id is not exist");
+        }
+        Map<String, List<Long>> map = new HashMap<>();
+        map.put("org_id", List.of(orgUnit.getId()));
+        map.put("user_id", List.of(orgUnit.getId()));
+        if (!mapMgr.exist(USER_ORG_UNIT, map)) {
+            throw new ValidationException("[unbindManagerUser]:    The manager user has unbind from orgUnit");
+        }
+        mapMgr.delete(USER_ORG_UNIT, map);
     }
 }

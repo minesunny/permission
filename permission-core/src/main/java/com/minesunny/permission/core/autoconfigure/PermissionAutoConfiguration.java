@@ -31,6 +31,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @AutoConfiguration(before = HibernateJpaAutoConfiguration.class)
 @ConditionalOnClass({EntityManager.class})
 @Import(PermissionAutoConfiguration.PermissionConfiguration.class)
+
 public class PermissionAutoConfiguration {
 
     @ComponentScan({"com.minesunny.permission.core.manager"})

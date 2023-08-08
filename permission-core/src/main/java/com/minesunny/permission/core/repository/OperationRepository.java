@@ -21,6 +21,5 @@ import com.minesunny.permission.core.entity.perm.Operation;
 import org.springframework.data.jpa.repository.support.JpaRepositoryImplementation;
 import org.springframework.stereotype.Repository;
 
-@Repository
 public interface OperationRepository extends JpaRepositoryImplementation<Operation, Long> {
 }

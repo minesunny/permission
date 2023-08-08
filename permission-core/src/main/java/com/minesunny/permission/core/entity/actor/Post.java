@@ -17,15 +17,15 @@
  */
 package com.minesunny.permission.core.entity.actor;
 
-import com.minesunny.jpa.entity.BaseEntity;
+import com.minesunny.jpa.entity.CachedIdEntity;
+import jakarta.persistence.Table;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import org.hibernate.annotations.Comment;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.*;
 
 import java.util.Set;
 
@@ -33,16 +33,14 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "t_post")
-@DiscriminatorValue("USER")
 @Comment("岗位信息")
+@SQLDelete(sql = "update t_post set delete_at = current_timestamp,version = ?1 where id in (?2) and delete_at is null")
+@Where(clause = "delete_at is null")
 @Setter
 @Getter
 @SuperBuilder
-public class Post extends BaseEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "id", nullable = false)
-    private Long id;
+public class Post extends CachedIdEntity {
+
 
     @Column(name = "post_name")
     @Comment(value = "post name")
@@ -50,11 +48,11 @@ public class Post extends BaseEntity {
 
 
     @Comment(value = "users in this dept")
-    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "t_post_user_map",
             joinColumns = @JoinColumn(name = "post_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"))
-    @Where(clause = "actor_type = 'USER'")
+    @Fetch(FetchMode.SELECT)
     private Set<User> users;
 
 }

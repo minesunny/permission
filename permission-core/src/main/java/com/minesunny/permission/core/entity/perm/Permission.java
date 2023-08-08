@@ -17,7 +17,7 @@
  */
 package com.minesunny.permission.core.entity.perm;
 
-import com.minesunny.jpa.entity.BaseEntity;
+import com.minesunny.jpa.entity.CachedIdEntity;
 import com.minesunny.permission.core.entity.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -38,13 +38,10 @@ import java.util.Set;
 @Getter
 @Setter
 @SuperBuilder
-@SQLDelete(sql = "update t_permission set delete_at = current_timestamp where id in (?) and  delete_at is null")
+@SQLDelete(sql = "update t_permission set delete_at = current_timestamp,version = ?1 where id in (?2) and delete_at is null")
 @Where(clause = "delete_at is null")
-public class Permission extends BaseEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "id", nullable = false)
-    private Long id;
+public class Permission extends CachedIdEntity {
+
 
     @Column(name = "perm_name")
     @Comment(value = "perm name")

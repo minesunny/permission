@@ -21,6 +21,5 @@ import com.minesunny.permission.core.entity.perm.Permission;
 import org.springframework.data.jpa.repository.support.JpaRepositoryImplementation;
 import org.springframework.stereotype.Repository;
 
-@Repository
 public interface PermissionRepository extends JpaRepositoryImplementation<Permission, Long> {
 }

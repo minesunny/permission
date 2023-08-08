@@ -17,7 +17,7 @@
  */
 package com.minesunny.permission.core.entity.perm;
 
-import com.minesunny.jpa.entity.BaseEntity;
+import com.minesunny.jpa.entity.CachedIdEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -31,17 +31,14 @@ import org.hibernate.annotations.SQLDelete;
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
-@Inheritance(strategy = InheritanceType.JOINED)
+@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 @DiscriminatorColumn(name = "perm_type")
 @Table(name = "t_resource")
 @Setter
 @Getter
-@SQLDelete(sql = "update t_resource set delete_at = current_timestamp where id in (?) and  delete_at is null")
-public class Resource extends BaseEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "id", nullable = false)
-    private Long id;
+@SQLDelete(sql = "update t_resource set delete_at = current_timestamp,version = ?1 where id in (?2) and delete_at is null")
+public class Resource extends CachedIdEntity {
+
 
     @Column(name = "resource_name")
     @Comment(value = "resourceName")
