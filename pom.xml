@@ -23,7 +23,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.build.targetEncoding>UTF-8</project.build.targetEncoding>
-        <h2.version>2.1.214</h2.version>
+        <h2.version>2.2.220</h2.version>
         <common-text.version>1.10.0</common-text.version>
         <pg.version>42.6.0</pg.version>
         <slfj.version>2.0.7</slfj.version>
