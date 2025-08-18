@@ -25,7 +25,7 @@
         <project.build.targetEncoding>UTF-8</project.build.targetEncoding>
         <h2.version>2.2.220</h2.version>
         <common-text.version>1.10.0</common-text.version>
-        <pg.version>42.6.0</pg.version>
+        <pg.version>42.6.1</pg.version>
         <slfj.version>2.0.7</slfj.version>
         <base-jpa.version>1.0-SNAPSHOT</base-jpa.version>
         <jetbrain.annotations.version>24.0.1</jetbrain.annotations.version>
