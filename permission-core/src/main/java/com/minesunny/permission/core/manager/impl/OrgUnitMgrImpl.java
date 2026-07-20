@@ -14,6 +14,7 @@ import com.minesunny.permission.core.manager.OrgUnitMgr;
 import com.minesunny.permission.core.manager.ReviewMgr;
 import com.minesunny.permission.core.repository.OrgRepository;
 import com.minesunny.permission.core.repository.PostRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeanUtils;
@@ -54,6 +55,7 @@ public class OrgUnitMgrImpl implements OrgUnitMgr {
     }
 
     @Override
+    @Transactional
     public void deletePost(@NotNull Post post) throws ServiceException {
         requirePostName(post);
         Post storePost = postRepository.findByPostName(post.getPostName())
@@ -126,6 +128,7 @@ public class OrgUnitMgrImpl implements OrgUnitMgr {
     }
 
     @Override
+    @Transactional
     public void deleteOrgUnit(@NotNull OrgUnit orgUnit) throws ServiceException {
         requireOrgName(orgUnit);
         OrgUnit storeOrgUnit = orgRepository.findByOrgName(orgUnit.getOrgName())
