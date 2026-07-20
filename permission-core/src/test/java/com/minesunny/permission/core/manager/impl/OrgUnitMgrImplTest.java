@@ -37,7 +37,7 @@ class OrgUnitMgrImplTest {
 
     @Test
     void addPost() throws ServiceException {
-        Post post = Post.builder().id(100L).build();
+        Post post = Post.builder().postName("org-addPost").build();
         Post savedPost = orgUnitMgr.addPost(post);
         Assertions.assertTrue(orgUnitMgr.readPost(savedPost).isPresent());
 
@@ -47,27 +47,25 @@ class OrgUnitMgrImplTest {
     @Test
     void updatePost() throws ServiceException {
         Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.updatePost(Post.builder().build()));
+        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.updatePost(RBACEntityConstants.NOT_EXIST_POST));
 
-        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.updatePost(Post.builder().id(-1L).build()));
-
-
-        Post post = Post.builder().build();
+        Post post = Post.builder().postName("org-updatePost").build();
         Post savedPost = orgUnitMgr.addPost(post);
 
-        savedPost.setPostName("update post name");
+        savedPost.setPostName("org-updatePost");
+        savedPost.setDescription("update post desc");
 
         orgUnitMgr.updatePost(savedPost);
         Optional<Post> optionalPost = orgUnitMgr.readPost(savedPost);
         Assertions.assertTrue(optionalPost.isPresent());
-        Assertions.assertEquals(optionalPost.get().getPostName(), "update post name");
+        Assertions.assertEquals("update post desc", optionalPost.get().getDescription());
     }
 
     @Test
     void deletePost() throws ServiceException {
-        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.deletePost(Post.builder().build()
-        ));
+        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.deletePost(Post.builder().build()));
 
-        Post post = Post.builder().build();
+        Post post = Post.builder().postName("org-deletePost").build();
         Post savedPost = orgUnitMgr.addPost(post);
         orgUnitMgr.deletePost(savedPost);
         Assertions.assertTrue(orgUnitMgr.readPost(savedPost).isEmpty());
@@ -83,25 +81,18 @@ class OrgUnitMgrImplTest {
 
     @Test
     void bindPost() throws ServiceException {
-        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.bindPost(RBACEntityConstants.POST,
-                RBACEntityConstants.USER));
+        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.bindPost(RBACEntityConstants.POST, RBACEntityConstants.USER));
+        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.bindPost(RBACEntityConstants.NOT_EXIST_POST, RBACEntityConstants.USER));
+        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.bindPost(RBACEntityConstants.NOT_EXIST_POST, RBACEntityConstants.NOT_EXIST_USER));
 
-        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.bindPost(RBACEntityConstants.NOT_EXIST_POST,
-                RBACEntityConstants.USER));
-
-        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.bindPost(RBACEntityConstants.NOT_EXIST_POST,
-                RBACEntityConstants.NOT_EXIST_USER));
-
-        Post post = Post.builder().build();
+        Post post = Post.builder().postName("org-bindPost").build();
         Post savedPost = orgUnitMgr.addPost(post);
-        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.bindPost(savedPost,
-                RBACEntityConstants.NOT_EXIST_USER));
+        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.bindPost(savedPost, RBACEntityConstants.NOT_EXIST_USER));
         User user = User.builder().username("org-bindPost-user").build();
         User savedUser = adminMgr.addUser(user);
 
         Assertions.assertDoesNotThrow(() -> orgUnitMgr.bindPost(savedPost, savedUser));
-        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.bindPost(savedPost,
-                savedUser));
+        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.bindPost(savedPost, savedUser));
         Optional<Post> optionalPost = orgUnitMgr.readPost(savedPost);
         Assertions.assertTrue(optionalPost.isPresent());
 
@@ -110,35 +101,25 @@ class OrgUnitMgrImplTest {
 
     @Test
     void unbindPost() throws ServiceException {
-        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.unbindPost(RBACEntityConstants.POST,
-                RBACEntityConstants.USER));
+        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.unbindPost(RBACEntityConstants.POST, RBACEntityConstants.USER));
+        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.unbindPost(RBACEntityConstants.NOT_EXIST_POST, RBACEntityConstants.USER));
+        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.unbindPost(RBACEntityConstants.NOT_EXIST_POST, RBACEntityConstants.NOT_EXIST_USER));
 
-        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.unbindPost(RBACEntityConstants.NOT_EXIST_POST,
-                RBACEntityConstants.USER));
-
-        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.unbindPost(RBACEntityConstants.NOT_EXIST_POST,
-                RBACEntityConstants.NOT_EXIST_USER));
-
-        Post post = Post.builder().build();
+        Post post = Post.builder().postName("org-unbindPost").build();
         Post savedPost = orgUnitMgr.addPost(post);
-        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.unbindPost(savedPost,
-                RBACEntityConstants.NOT_EXIST_USER));
+        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.unbindPost(savedPost, RBACEntityConstants.NOT_EXIST_USER));
         User user = User.builder().username("org-unbindPost-user").build();
         User savedUser = adminMgr.addUser(user);
-        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.unbindPost(savedPost,
-                savedUser));
+        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.unbindPost(savedPost, savedUser));
         Assertions.assertDoesNotThrow(() -> orgUnitMgr.bindPost(savedPost, savedUser));
         Optional<Post> optionalPost = orgUnitMgr.readPost(savedPost);
         Assertions.assertTrue(optionalPost.isPresent());
-
         Assertions.assertTrue(optionalPost.get().getUsers().contains(savedUser));
-
 
         Assertions.assertDoesNotThrow(() -> orgUnitMgr.unbindPost(savedPost, savedUser));
 
         Optional<Post> optionalPost2 = orgUnitMgr.readPost(savedPost);
         Assertions.assertTrue(optionalPost2.isPresent());
-
         Assertions.assertFalse(optionalPost2.get().getUsers().contains(savedUser));
     }
 

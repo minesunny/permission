@@ -34,7 +34,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Table(name = "t_post")
 @Comment("岗位信息")
-@SQLDelete(sql = "update t_post set delete_at = current_timestamp,version = ?1 where id in (?2) and delete_at is null")
+@SQLDelete(sql = "update t_post set delete_at = current_timestamp, version = ?2 where id in (?1) and delete_at is null")
 @Where(clause = "delete_at is null")
 @Setter
 @Getter
@@ -45,6 +45,11 @@ public class Post extends CachedIdEntity {
     @Column(name = "post_name")
     @Comment(value = "post name")
     private String postName;
+
+
+    @Column(name = "description")
+    @Comment(value = "detail description of this post")
+    private String description;
 
 
     @Comment(value = "users in this dept")
