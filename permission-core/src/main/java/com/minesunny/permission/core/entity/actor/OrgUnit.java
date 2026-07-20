@@ -43,7 +43,7 @@ import java.util.Set;
 @SQLDelete(sql = "update t_org_unit set delete_at = current_timestamp, version = ?2 where id in (?1) and delete_at is null")
 public class OrgUnit extends CachedIdEntity {
 
-    @Column(name = "org_name")
+    @Column(name = "org_name", unique = true, nullable = false)
     @Comment(value = "org name")
     private String orgName;
 

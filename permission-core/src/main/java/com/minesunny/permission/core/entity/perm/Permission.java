@@ -43,7 +43,7 @@ import java.util.Set;
 public class Permission extends CachedIdEntity {
 
 
-    @Column(name = "perm_name")
+    @Column(name = "perm_name", unique = true, nullable = false)
     @Comment(value = "perm name")
     private String permName;
 

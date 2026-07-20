@@ -45,7 +45,7 @@ import java.util.Set;
 @Where(clause = "delete_at is null")
 public class Role extends CachedIdEntity {
 
-    @Column(name = "role_name")
+    @Column(name = "role_name", unique = true, nullable = false)
     @Comment(value = "role name")
     private String roleName;
 

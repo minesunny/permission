@@ -42,7 +42,7 @@ import java.util.Set;
 public class Post extends CachedIdEntity {
 
 
-    @Column(name = "post_name")
+    @Column(name = "post_name", unique = true, nullable = false)
     @Comment(value = "post name")
     private String postName;
 
