@@ -89,8 +89,7 @@ h2Version=2.2.220
 postgresqlVersion=42.6.1
 slf4jVersion=2.0.7
 jetbrainsAnnotationsVersion=24.0.1
-uidGeneratorVersion=1.0.3.RELEASE
-fortressVersion=2.0.8
+fortressCoreVersion=2.0.8
 baseJpaVersion=1.0-SNAPSHOT
 ```
 
@@ -135,8 +134,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
     implementation("org.apache.commons:commons-text:${property("commonsTextVersion")}")
-    implementation("com.github.wujun234:uid-generator-spring-boot-starter:${property("uidGeneratorVersion")}")
-    implementation("org.apache.directory.fortress:fortress-realm-impl:${property("fortressVersion")}")
+    implementation("org.apache.directory.fortress:fortress-core:${property("fortressCoreVersion")}")
 
     compileOnly("com.minesunny.jpa:base-jpa:${property("baseJpaVersion")}")
     compileOnly("org.jetbrains:annotations:${property("jetbrainsAnnotationsVersion")}")

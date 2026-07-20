@@ -49,8 +49,11 @@
     - `org.jetbrains:annotations`（optional）
     - `org.apache.commons:commons-text`
     - `junit:junit`（test）
-    - `com.github.wujun234:uid-generator-spring-boot-starter:${uidGeneratorVersion}`
-    - `org.apache.directory.fortress:fortress-realm-impl:${fortressVersion}`
+    - `org.apache.directory.fortress:fortress-core:${fortressCoreVersion}`（代码只用 `fortress.core.*`，例如 `AuthorizationException extends fortress.core.SecurityException`；原 pom 误引较重的 `fortress-realm-impl`，改为直接引 `fortress-core`）
+
+  > **已移除两个无用依赖**（确认未使用）：
+  > - `com.github.wujun234:uid-generator-spring-boot-starter`：base-jpa 自带 `com.minesunny.jpa.uid...EntityCachedUidGenerator`（`CachedIdEntity` 经 `@GenericGenerator` 调用它），全仓零引用 `com.github.wujun234`。
+  > - `org.apache.directory.fortress:fortress-realm-impl`：代码只用 `fortress-core`，已替换为 `fortress-core`。
     - `com.minesunny.jpa:base-jpa`（`compileOnly`，等价原 `provided`；版本走 mavenLocal 的 1.0-SNAPSHOT）
   - `base-jpa` 走 `mavenLocal()`（本地有 `1.0-SNAPSHOT`）
 - Gradle Wrapper：用 Gradle 8.7 生成（兼容 JDK 21 + Spring Boot 3.1）
@@ -146,5 +149,5 @@ Optional<OrgUnit> findByOrgName(String orgName);
 ## 风险与备注
 
 - `base-jpa` 是 `com.minesunny.jpa:base-jpa:1.0-SNAPSHOT`，仅存在于本地 m2；构建依赖 `mavenLocal()`，换机器需先安装。
-- `fortress-realm-impl` 与 `uid-generator-spring-boot-starter` 来自 Maven Central / JitPack（原 pom 直接用版本号），保持不变。
+- `fortress-core` 来自 Maven Central；移除的 `uid-generator-spring-boot-starter`(JitPack) 已确认未使用，故无需 JitPack 仓库，`mavenCentral()` + `mavenLocal()` 即可。
 - 不改 `application.properties`、`PermissionAutoConfiguration`、`Auth`/`Session`/`Operation`/`Resource`/`OrgSdtNode` 等非身份实体。
