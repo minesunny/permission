@@ -16,7 +16,6 @@ import com.minesunny.permission.core.repository.OrgRepository;
 import com.minesunny.permission.core.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
