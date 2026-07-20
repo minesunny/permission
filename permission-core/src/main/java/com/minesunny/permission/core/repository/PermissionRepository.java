@@ -20,5 +20,10 @@ package com.minesunny.permission.core.repository;
 import com.minesunny.permission.core.entity.perm.Permission;
 import org.springframework.data.jpa.repository.support.JpaRepositoryImplementation;
 
+import java.util.Optional;
+
 public interface PermissionRepository extends JpaRepositoryImplementation<Permission, Long> {
+
+    Optional<Permission> findByPermName(String permName);
+
 }

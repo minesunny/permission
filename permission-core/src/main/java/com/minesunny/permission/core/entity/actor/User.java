@@ -44,6 +44,10 @@ import java.util.Set;
 @Setter
 public class User extends CachedIdEntity {
 
+    @Column(name = "username")
+    @Comment(value = "user login name, unique")
+    private String username;
+
 
     @Column(name = "description")
     @Comment(value = "description")
