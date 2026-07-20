@@ -48,5 +48,14 @@ public class Resource extends CachedIdEntity {
     @Comment(value = "description resource")
     private String description;
 
-
+    /**
+     * Stable hashCode so a Resource can live in a HashSet across the
+     * pre-/post-persist transition (when its id is assigned and the
+     * id-based hashCode from {@code BaseEntity} would otherwise change).
+     * Equals remains id-based and consistent with this constant hash.
+     */
+    @Override
+    public int hashCode() {
+        return Resource.class.hashCode();
+    }
 }

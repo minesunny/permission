@@ -1,20 +1,3 @@
-/*
- * Copyright 2023 the original author or authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- *
- */
 package com.minesunny.permission.core.manager.impl;
 
 import com.minesunny.jpa.autoconfigure.BaseJpaAutoConfiguration;
@@ -56,14 +39,12 @@ class ReviewMgrImplTest {
     @Commit
     void testReadUser() throws ServiceException {
         assertThrows(ValidationException.class, () -> reviewMgr.readUser(RBACEntityConstants.USER));
-        // read byId;
-        User user = User.builder().description("test readUser").build();
+        User user = User.builder().username("rev-readUser").description("test readUser").build();
 
         Optional<User> readUser = reviewMgr.readUser(adminMgr.addUser(user));
         assertTrue(readUser.isPresent());
         assertEquals("test readUser", readUser.get().getDescription());
 
-        // read by specification;
         user.andEq("description");
         List<User> users = reviewMgr.readUsers(user);
         assertFalse(users.isEmpty());
@@ -74,28 +55,23 @@ class ReviewMgrImplTest {
     @Commit
     void testReadUsers() throws ServiceException {
         assertThrows(ValidationException.class, () -> reviewMgr.readUsers(RBACEntityConstants.USER));
-        assertDoesNotThrow(() -> adminMgr.addUser(User.builder().description("abcdefg").build()));
-
-        assertDoesNotThrow(() -> adminMgr.addUser(User.builder().description("abc").build()));
+        assertDoesNotThrow(() -> adminMgr.addUser(User.builder().username("rev-readUsers-1").description("abcdefg").build()));
+        assertDoesNotThrow(() -> adminMgr.addUser(User.builder().username("rev-readUsers-2").description("abc").build()));
 
         List<User> users = reviewMgr.readUsers(User.builder().description("abc").build().like("description", true));
-
         assertEquals(2, users.size());
     }
-
 
     @Test
     @Commit
     void testReadRole() throws ServiceException {
         assertThrows(ValidationException.class, () -> reviewMgr.readRole(RBACEntityConstants.ROLE));
-        // read byId;
-        Role role = Role.builder().description("test testReadRole").build();
+        Role role = Role.builder().roleName("rev-readRole").description("test testReadRole").build();
 
         Optional<Role> readRole = reviewMgr.readRole(adminMgr.addRole(role));
         assertTrue(readRole.isPresent());
         assertEquals("test testReadRole", readRole.get().getDescription());
 
-        // read by specification;
         role.andEq("description");
         List<Role> roles = reviewMgr.readRoles(role);
         assertFalse(roles.isEmpty());
@@ -106,28 +82,23 @@ class ReviewMgrImplTest {
     @Commit
     void testReadRoles() throws ServiceException {
         assertThrows(ValidationException.class, () -> reviewMgr.readRoles(RBACEntityConstants.ROLE));
-        assertDoesNotThrow(() -> adminMgr.addRole(Role.builder().description("abcdefg").build()));
-
-        assertDoesNotThrow(() -> adminMgr.addRole(Role.builder().description("abc").build()));
+        assertDoesNotThrow(() -> adminMgr.addRole(Role.builder().roleName("rev-readRoles-1").description("abcdefg").build()));
+        assertDoesNotThrow(() -> adminMgr.addRole(Role.builder().roleName("rev-readRoles-2").description("abc").build()));
 
         List<Role> roles = reviewMgr.readRoles(Role.builder().description("abc").build().like("description", true));
-
         assertEquals(2, roles.size());
     }
-
 
     @Test
     @Commit
     void testReadPermission() throws ServiceException {
         assertThrows(ValidationException.class, () -> reviewMgr.readPermission(RBACEntityConstants.PERMISSION));
-        // read byId;
-        Permission permission = Permission.builder().description("test testReadPermission").build();
+        Permission permission = Permission.builder().permName("rev-readPerm").description("test testReadPermission").build();
 
         Optional<Permission> readPermission = reviewMgr.readPermission(adminMgr.addPermission(permission));
         assertTrue(readPermission.isPresent());
         assertEquals(readPermission.get().getDescription(), "test testReadPermission");
 
-        // read by specification;
         permission.andEq("description");
         List<Permission> permissions = reviewMgr.readPermissions(permission);
         assertFalse(permissions.isEmpty());
@@ -138,48 +109,38 @@ class ReviewMgrImplTest {
     @Commit
     void testReadPermissions() throws ServiceException {
         assertThrows(ValidationException.class, () -> reviewMgr.readPermission(RBACEntityConstants.PERMISSION));
-        assertDoesNotThrow(() -> adminMgr.addPermission(Permission.builder().description("abcdefg").build()));
+        assertDoesNotThrow(() -> adminMgr.addPermission(Permission.builder().permName("rev-readPerms-1").description("abcdefg").build()));
+        assertDoesNotThrow(() -> adminMgr.addPermission(Permission.builder().permName("rev-readPerms-2").description("abc").build()));
 
-        assertDoesNotThrow(() -> adminMgr.addPermission(Permission.builder().description("abc").build()));
-
-        List<Permission> permissions = reviewMgr.readPermissions(Permission.builder().description("abc").build().like(
-                "description",
-                true));
-
+        List<Permission> permissions = reviewMgr.readPermissions(Permission.builder().description("abc").build().like("description", true));
         assertEquals(2, permissions.size());
     }
-
 
     @Test
     @Commit
     void testRolePermissions() throws ServiceException {
-
         assertEquals(0, reviewMgr.rolePermissions(RBACEntityConstants.NOT_EXIST_ROLE).size());
 
-
-        Role role = adminMgr.addRole(new Role());
-        Permission p1 = adminMgr.addPermission(new Permission());
-        Permission p2 = adminMgr.addPermission(new Permission());
+        Role role = adminMgr.addRole(Role.builder().roleName("rev-rolePerms").build());
+        Permission p1 = adminMgr.addPermission(Permission.builder().permName("rev-rolePerms-p1").build());
+        Permission p2 = adminMgr.addPermission(Permission.builder().permName("rev-rolePerms-p2").build());
         adminMgr.grantPermission(p1, role);
         adminMgr.grantPermission(p2, role);
         List<Permission> permissions = reviewMgr.rolePermissions(role);
 
         assertTrue(permissions.contains(p1));
         assertTrue(permissions.contains(p2));
-
     }
-
 
     @Test
     @Commit
     void testUserPermissions() throws ServiceException {
-
         assertEquals(reviewMgr.userPermissions(RBACEntityConstants.NOT_EXIST_USER).size(), 0);
 
-        Role role = adminMgr.addRole(new Role());
-        User user = adminMgr.addUser(new User());
-        Permission p1 = adminMgr.addPermission(new Permission());
-        Permission p2 = adminMgr.addPermission(new Permission());
+        Role role = adminMgr.addRole(Role.builder().roleName("rev-userPerms-role").build());
+        User user = adminMgr.addUser(User.builder().username("rev-userPerms-user").build());
+        Permission p1 = adminMgr.addPermission(Permission.builder().permName("rev-userPerms-p1").build());
+        Permission p2 = adminMgr.addPermission(Permission.builder().permName("rev-userPerms-p2").build());
         adminMgr.grantPermission(p1, role);
         adminMgr.grantPermission(p2, role);
         adminMgr.assignUser(user, role);
@@ -190,15 +151,14 @@ class ReviewMgrImplTest {
         assertTrue(permissions.contains(p2));
     }
 
-
     @Test
     @Commit
     void testAssignedUsers() throws ServiceException {
         assertEquals(reviewMgr.assignedUsers(RBACEntityConstants.NOT_EXIST_ROLE).size(), 0);
 
-        Role role = adminMgr.addRole(new Role());
-        User user1 = adminMgr.addUser(new User());
-        User user2 = adminMgr.addUser(new User());
+        Role role = adminMgr.addRole(Role.builder().roleName("rev-assignedUsers-role").build());
+        User user1 = adminMgr.addUser(User.builder().username("rev-assignedUsers-u1").build());
+        User user2 = adminMgr.addUser(User.builder().username("rev-assignedUsers-u2").build());
 
         adminMgr.assignUser(user1, role);
         adminMgr.assignUser(user2, role);
@@ -213,9 +173,9 @@ class ReviewMgrImplTest {
     void testAssignedRoles() throws ServiceException {
         assertEquals(reviewMgr.assignedRoles(RBACEntityConstants.NOT_EXIST_USER).size(), 0);
 
-        Role role1 = adminMgr.addRole(new Role());
-        Role role2 = adminMgr.addRole(new Role());
-        User user = adminMgr.addUser(new User());
+        Role role1 = adminMgr.addRole(Role.builder().roleName("rev-assignedRoles-r1").build());
+        Role role2 = adminMgr.addRole(Role.builder().roleName("rev-assignedRoles-r2").build());
+        User user = adminMgr.addUser(User.builder().username("rev-assignedRoles-user").build());
 
         adminMgr.assignUser(user, role1);
         adminMgr.assignUser(user, role2);

@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -37,11 +38,10 @@ public class ReviewMgrImpl implements ReviewMgr {
 
     @Override
     public Optional<User> readUser(@NotNull User user) throws ServiceException {
-        if (Objects.isNull(user.getId())) {
-            throw new ValidationException("[readUser]:    The RBAC user entity is required and cannot be null");
+        if (!StringUtils.hasText(user.getUsername())) {
+            throw new ValidationException("[readUser]:    The RBAC user's username is required and cannot be null");
         }
-        return userRepository.findById(user.getId());
-
+        return userRepository.findByUsername(user.getUsername());
     }
 
     @Override
@@ -56,10 +56,10 @@ public class ReviewMgrImpl implements ReviewMgr {
 
     @Override
     public Optional<Role> readRole(@NotNull Role role) throws ServiceException {
-        if (Objects.isNull(role.getId())) {
-            throw new ValidationException("[readRole]:    The RBAC role entity is required and cannot be null");
+        if (!StringUtils.hasText(role.getRoleName())) {
+            throw new ValidationException("[readRole]:    The RBAC role's roleName is required and cannot be null");
         }
-        return roleRepository.findById(role.getId());
+        return roleRepository.findByRoleName(role.getRoleName());
     }
 
     @Override
@@ -73,10 +73,10 @@ public class ReviewMgrImpl implements ReviewMgr {
 
     @Override
     public Optional<Permission> readPermission(@NotNull Permission permission) throws ServiceException {
-        if (Objects.isNull(permission.getId())) {
-            throw new ValidationException("[readPermission]:    The RBAC permission entity is required and cannot be null");
+        if (!StringUtils.hasText(permission.getPermName())) {
+            throw new ValidationException("[readPermission]:    The RBAC permission's permName is required and cannot be null");
         }
-        return permissionRepository.findById(permission.getId());
+        return permissionRepository.findByPermName(permission.getPermName());
     }
 
     @Override

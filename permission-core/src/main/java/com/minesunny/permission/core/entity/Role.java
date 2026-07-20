@@ -41,7 +41,7 @@ import java.util.Set;
 @Table(name = "t_role")
 @Getter
 @Setter
-@SQLDelete(sql = "update t_role set delete_at = current_timestamp and version = ?1 where id in (?2) and delete_at is null")
+@SQLDelete(sql = "update t_role set delete_at = current_timestamp, version = ?2 where id in (?1) and delete_at is null")
 @Where(clause = "delete_at is null")
 public class Role extends CachedIdEntity {
 

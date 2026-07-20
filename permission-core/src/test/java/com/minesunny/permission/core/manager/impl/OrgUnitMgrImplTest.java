@@ -96,7 +96,7 @@ class OrgUnitMgrImplTest {
         Post savedPost = orgUnitMgr.addPost(post);
         Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.bindPost(savedPost,
                 RBACEntityConstants.NOT_EXIST_USER));
-        User user = User.builder().build();
+        User user = User.builder().username("org-bindPost-user").build();
         User savedUser = adminMgr.addUser(user);
 
         Assertions.assertDoesNotThrow(() -> orgUnitMgr.bindPost(savedPost, savedUser));
@@ -123,7 +123,7 @@ class OrgUnitMgrImplTest {
         Post savedPost = orgUnitMgr.addPost(post);
         Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.unbindPost(savedPost,
                 RBACEntityConstants.NOT_EXIST_USER));
-        User user = User.builder().build();
+        User user = User.builder().username("org-unbindPost-user").build();
         User savedUser = adminMgr.addUser(user);
         Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.unbindPost(savedPost,
                 savedUser));

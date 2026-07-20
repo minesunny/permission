@@ -38,7 +38,7 @@ import java.util.Set;
 @Getter
 @Setter
 @SuperBuilder
-@SQLDelete(sql = "update t_permission set delete_at = current_timestamp,version = ?1 where id in (?2) and delete_at is null")
+@SQLDelete(sql = "update t_permission set delete_at = current_timestamp, version = ?2 where id in (?1) and delete_at is null")
 @Where(clause = "delete_at is null")
 public class Permission extends CachedIdEntity {
 
