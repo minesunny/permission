@@ -1102,7 +1102,14 @@ git commit -m "refactor: identify user/role/permission by natural key in review/
 
 > 规则同 Task 3（自然键必填、按自然键解析 id、重复抛「已存在」）。`bindOrgUnitNode` 用 `orgRepository.findById(nodeId)` 直接校验（不经过已改为 orgName 的 `readOrgUnit`）；`OrgSdtNode.nodeId` 非空校验**保留**。同时修掉 bind/unbind 系列 map 里 `user_id` 误填成 `orgUnit.getId()`/`post.getId()` 的 bug。
 
-- [ ] **Step 1: 全量重写 `OrgUnitMgrImpl`**
+- [ ] **Step 1: 全量重写 `OrgUnitMgrImpl` + 修复 Post/OrgUnit 的 `@SQLDelete` 参数顺序**
+
+先修一个预存 bug（Task 3 已对 User/Role/Permission 修复并经 review 确认；Hibernate 6.2 `@SQLDelete` 绑定顺序是 `?1`=id、`?2`=version，原模板把二者写反导致软删是空操作）。`deletePost` 测试会断言删除后读不到，必须先修：
+
+- `entity/actor/Post.java`：`@SQLDelete(sql = "update t_post set delete_at = current_timestamp,version = ?1 where id in (?2) and delete_at is null")` → 把 `?1`/`?2` 互换为 `update t_post set delete_at = current_timestamp, version = ?2 where id in (?1) and delete_at is null`
+- `entity/actor/OrgUnit.java`：同样把 `version = ?1 where id in (?2)` 改成 `version = ?2 where id in (?1)`（`deleteOrgUnit` 已实现，修之以免后续踩坑）
+
+> 其余实体（Operation/Resource/AuthPwd/OrgSdtNode）的同类 `@SQLDelete` bug 本次不动（未被删除路径测试覆盖），记为已知遗留。
 
 整文件替换 `manager/impl/OrgUnitMgrImpl.java`：
 
