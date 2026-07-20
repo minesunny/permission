@@ -39,8 +39,7 @@ dependencies {
     testAnnotationProcessor("org.projectlombok:lombok:${property("lombokVersion")}")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("com.h2database:h2")
-    testImplementation("junit:junit")
+    testImplementation("com.h2database:h2:${property("h2Version")}")
     testImplementation("com.minesunny.jpa:base-jpa:${property("baseJpaVersion")}")
 }
 
