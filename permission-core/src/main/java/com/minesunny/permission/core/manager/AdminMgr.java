@@ -41,7 +41,7 @@ public interface AdminMgr {
     User addUser(@NotNull User user) throws ServiceException;
 
     @NotNull
-    User updateUser(@NotNull User user) throws ServiceException;
+    User updateUser(@NotNull String username, @NotNull User user) throws ServiceException;
 
 
     /**
@@ -70,7 +70,7 @@ public interface AdminMgr {
     Role addRole(@NotNull Role role) throws ServiceException;
 
     @NotNull
-    Role updateRole(@NotNull Role role) throws ServiceException;
+    Role updateRole(@NotNull String roleName, @NotNull Role role) throws ServiceException;
 
 
     /**
@@ -114,7 +114,7 @@ public interface AdminMgr {
     Permission addPermission(@NotNull Permission permission) throws ServiceException;
 
     @NotNull
-    Permission updatePermission(@NotNull Permission permission) throws ServiceException;
+    Permission updatePermission(@NotNull String permName, @NotNull Permission permission) throws ServiceException;
 
     void deletePermission(@NotNull Permission permission) throws ServiceException;
 

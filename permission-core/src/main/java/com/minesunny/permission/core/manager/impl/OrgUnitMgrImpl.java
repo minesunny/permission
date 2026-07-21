@@ -14,12 +14,11 @@ import com.minesunny.permission.core.manager.OrgUnitMgr;
 import com.minesunny.permission.core.manager.ReviewMgr;
 import com.minesunny.permission.core.repository.OrgRepository;
 import com.minesunny.permission.core.repository.PostRepository;
-import jakarta.transaction.Transactional;
+import com.minesunny.permission.core.util.NaturalKeys;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.util.*;
 
@@ -36,7 +35,7 @@ public class OrgUnitMgrImpl implements OrgUnitMgr {
 
     @Override
     public @NotNull Post addPost(@NotNull Post post) throws ServiceException {
-        requirePostName(post);
+        NaturalKeys.requirePostName(post);
         if (postRepository.findByPostName(post.getPostName()).isPresent()) {
             throw new ValidationException("[addPost]:  The post entity [postName: %s ] already exists".formatted(post.getPostName()));
         }
@@ -46,18 +45,16 @@ public class OrgUnitMgrImpl implements OrgUnitMgr {
     }
 
     @Override
-    public @NotNull Post updatePost(@NotNull Post post) throws ServiceException {
-        requirePostName(post);
-        Post storePost = postRepository.findByPostName(post.getPostName())
-                .orElseThrow(() -> new ValidationException("[updatePost]:    The post entity [postName: %s] does not exist".formatted(post.getPostName())));
-        BeanUtils.copyProperties(post, storePost, "id", "postName", "users");
+    public @NotNull Post updatePost(@NotNull String postName, @NotNull Post post) throws ServiceException {
+        Post storePost = postRepository.findByPostName(postName)
+                .orElseThrow(() -> new ValidationException("[updatePost]:    The post entity [postName: %s] does not exist".formatted(postName)));
+        BeanUtils.copyProperties(post, storePost, "id", "users");
         return postRepository.saveAndFlush(storePost);
     }
 
     @Override
-    @Transactional
     public void deletePost(@NotNull Post post) throws ServiceException {
-        requirePostName(post);
+        NaturalKeys.requirePostName(post);
         Post storePost = postRepository.findByPostName(post.getPostName())
                 .orElseThrow(() -> new ValidationException("[deletePost]:    The post entity [postName: %s] does not exist".formatted(post.getPostName())));
         Map<String, List<Long>> map = new HashMap<>();
@@ -68,7 +65,7 @@ public class OrgUnitMgrImpl implements OrgUnitMgr {
 
     @Override
     public Optional<Post> readPost(@NotNull Post post) throws ServiceException {
-        requirePostName(post);
+        NaturalKeys.requirePostName(post);
         return postRepository.findByPostName(post.getPostName());
     }
 
@@ -109,7 +106,7 @@ public class OrgUnitMgrImpl implements OrgUnitMgr {
 
     @Override
     public @NotNull OrgUnit addOrgUnit(@NotNull OrgUnit orgUnit) throws ServiceException {
-        requireOrgName(orgUnit);
+        NaturalKeys.requireOrgName(orgUnit);
         if (orgRepository.findByOrgName(orgUnit.getOrgName()).isPresent()) {
             throw new ValidationException("[addOrgUnit]:  The OrgUnit entity [orgName: %s ] already exists".formatted(orgUnit.getOrgName()));
         }
@@ -119,18 +116,16 @@ public class OrgUnitMgrImpl implements OrgUnitMgr {
     }
 
     @Override
-    public @NotNull OrgUnit updateOrgUnit(@NotNull OrgUnit orgUnit) throws ServiceException {
-        requireOrgName(orgUnit);
-        OrgUnit storeOrgUnit = orgRepository.findByOrgName(orgUnit.getOrgName())
-                .orElseThrow(() -> new ValidationException("[updateOrgUnit]:    The orgUnit entity [orgName: %s] does not exist".formatted(orgUnit.getOrgName())));
-        BeanUtils.copyProperties(orgUnit, storeOrgUnit, "id", "orgName", "users", "managerUsers");
+    public @NotNull OrgUnit updateOrgUnit(@NotNull String orgName, @NotNull OrgUnit orgUnit) throws ServiceException {
+        OrgUnit storeOrgUnit = orgRepository.findByOrgName(orgName)
+                .orElseThrow(() -> new ValidationException("[updateOrgUnit]:    The orgUnit entity [orgName: %s] does not exist".formatted(orgName)));
+        BeanUtils.copyProperties(orgUnit, storeOrgUnit, "id", "users", "managerUsers");
         return orgRepository.saveAndFlush(storeOrgUnit);
     }
 
     @Override
-    @Transactional
     public void deleteOrgUnit(@NotNull OrgUnit orgUnit) throws ServiceException {
-        requireOrgName(orgUnit);
+        NaturalKeys.requireOrgName(orgUnit);
         OrgUnit storeOrgUnit = orgRepository.findByOrgName(orgUnit.getOrgName())
                 .orElseThrow(() -> new ValidationException("[deleteOrgUnit]:    The orgUnit entity [orgName: %s] does not exist".formatted(orgUnit.getOrgName())));
         Long orgId = storeOrgUnit.getId();
@@ -150,7 +145,7 @@ public class OrgUnitMgrImpl implements OrgUnitMgr {
 
     @Override
     public Optional<OrgUnit> readOrgUnit(@NotNull OrgUnit orgUnit) throws ServiceException {
-        requireOrgName(orgUnit);
+        NaturalKeys.requireOrgName(orgUnit);
         return orgRepository.findByOrgName(orgUnit.getOrgName());
     }
 
@@ -246,20 +241,8 @@ public class OrgUnitMgrImpl implements OrgUnitMgr {
         mapMgr.delete(USER_ORG_UNIT, map);
     }
 
-    private void requirePostName(Post post) throws ValidationException {
-        if (!StringUtils.hasText(post.getPostName())) {
-            throw new ValidationException("The post entity's postName is required and cannot be null");
-        }
-    }
-
-    private void requireOrgName(OrgUnit orgUnit) throws ValidationException {
-        if (!StringUtils.hasText(orgUnit.getOrgName())) {
-            throw new ValidationException("The orgUnit entity's orgName is required and cannot be null");
-        }
-    }
-
     private Long resolvePostId(Post post, String op) throws ValidationException {
-        requirePostName(post);
+        NaturalKeys.requirePostName(post);
         return postRepository.findByPostName(post.getPostName())
                 .orElseThrow(() -> new ValidationException("[%s]:    The post[postName: %s] does not exist".formatted(op, post.getPostName())))
                 .getId();
@@ -273,7 +256,7 @@ public class OrgUnitMgrImpl implements OrgUnitMgr {
 
     private long[] resolveUserOrg(User user, OrgUnit orgUnit, String op) throws ServiceException {
         Long userId = resolveUserId(user, op);
-        requireOrgName(orgUnit);
+        NaturalKeys.requireOrgName(orgUnit);
         Long orgId = orgRepository.findByOrgName(orgUnit.getOrgName())
                 .orElseThrow(() -> new ValidationException("[%s]:    The orgUnit[orgName: %s] does not exist".formatted(op, orgUnit.getOrgName())))
                 .getId();

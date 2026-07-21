@@ -11,7 +11,7 @@ import com.minesunny.permission.core.manager.AdminMgr;
 import com.minesunny.permission.core.repository.PermissionRepository;
 import com.minesunny.permission.core.repository.RoleRepository;
 import com.minesunny.permission.core.repository.UserRepository;
-import jakarta.transaction.Transactional;
+import com.minesunny.permission.core.util.NaturalKeys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +35,7 @@ public class AdminMgrImpl implements AdminMgr {
 
     @Override
     public @NotNull User addUser(@NotNull User user) throws ServiceException {
-        requireUsername(user);
+        NaturalKeys.requireUsername(user);
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             throw new ValidationException("[addUser]:  The RBAC user entity [username: %s ] already exists".formatted(user.getUsername()));
         }
@@ -45,18 +45,16 @@ public class AdminMgrImpl implements AdminMgr {
     }
 
     @Override
-    public @NotNull User updateUser(@NotNull User user) throws ServiceException {
-        requireUsername(user);
-        User storeUser = userRepository.findByUsername(user.getUsername())
-                .orElseThrow(() -> new ValidationException("[updateUser]:    The RBAC user entity [username: %s] does not exist".formatted(user.getUsername())));
-        BeanUtils.copyProperties(user, storeUser, "id", "username", "roles", "post", "managerOrgUnits", "orgUnits");
+    public @NotNull User updateUser(@NotNull String username, @NotNull User user) throws ServiceException {
+        User storeUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ValidationException("[updateUser]:    The RBAC user entity [username: %s] does not exist".formatted(username)));
+        BeanUtils.copyProperties(user, storeUser, "id", "roles", "post", "managerOrgUnits", "orgUnits");
         return userRepository.saveAndFlush(storeUser);
     }
 
     @Override
-    @Transactional
     public void deleteUser(@NotNull User user) throws ServiceException {
-        requireUsername(user);
+        NaturalKeys.requireUsername(user);
         User storeUser = userRepository.findByUsername(user.getUsername())
                 .orElseThrow(() -> new ValidationException("[deleteUser]:    The RBAC user entity [username: %s] does not exist".formatted(user.getUsername())));
         Map<String, List<Long>> map = new HashMap<>();
@@ -69,7 +67,7 @@ public class AdminMgrImpl implements AdminMgr {
 
     @Override
     public @NotNull Role addRole(@NotNull Role role) throws ServiceException {
-        requireRoleName(role);
+        NaturalKeys.requireRoleName(role);
         if (roleRepository.findByRoleName(role.getRoleName()).isPresent()) {
             throw new ValidationException("[addRole]:    The RBAC role entity [roleName: %s ] already exists".formatted(role.getRoleName()));
         }
@@ -79,18 +77,16 @@ public class AdminMgrImpl implements AdminMgr {
     }
 
     @Override
-    public @NotNull Role updateRole(@NotNull Role role) throws ServiceException {
-        requireRoleName(role);
-        Role storeRole = roleRepository.findByRoleName(role.getRoleName())
-                .orElseThrow(() -> new ValidationException("[updateRole]:    The RBAC role entity [roleName: %s] does not exist".formatted(role.getRoleName())));
-        BeanUtils.copyProperties(role, storeRole, "id", "roleName", "users", "permissions");
+    public @NotNull Role updateRole(@NotNull String roleName, @NotNull Role role) throws ServiceException {
+        Role storeRole = roleRepository.findByRoleName(roleName)
+                .orElseThrow(() -> new ValidationException("[updateRole]:    The RBAC role entity [roleName: %s] does not exist".formatted(roleName)));
+        BeanUtils.copyProperties(role, storeRole, "id", "users", "permissions");
         return roleRepository.saveAndFlush(storeRole);
     }
 
     @Override
-    @Transactional
     public void deleteRole(@NotNull Role role) throws ServiceException {
-        requireRoleName(role);
+        NaturalKeys.requireRoleName(role);
         Role storeRole = roleRepository.findByRoleName(role.getRoleName())
                 .orElseThrow(() -> new ValidationException("[deleteRole]:    The RBAC role entity [roleName: %s] does not exist".formatted(role.getRoleName())));
         roleRepository.delete(storeRole);
@@ -122,7 +118,7 @@ public class AdminMgrImpl implements AdminMgr {
 
     @Override
     public @NotNull Permission addPermission(@NotNull Permission permission) throws ServiceException {
-        requirePermName(permission);
+        NaturalKeys.requirePermName(permission);
         if (permissionRepository.findByPermName(permission.getPermName()).isPresent()) {
             throw new ValidationException("[addPermission]:    The RBAC permission entity [permName: %s ] already exists".formatted(permission.getPermName()));
         }
@@ -131,19 +127,17 @@ public class AdminMgrImpl implements AdminMgr {
     }
 
     @Override
-    public @NotNull Permission updatePermission(@NotNull Permission permission) throws ServiceException {
-        requirePermName(permission);
-        Permission storePermission = permissionRepository.findByPermName(permission.getPermName())
-                .orElseThrow(() -> new ValidationException("[updatePermission]:    The RBAC permission entity [permName: %s] does not exist".formatted(permission.getPermName())));
+    public @NotNull Permission updatePermission(@NotNull String permName, @NotNull Permission permission) throws ServiceException {
+        Permission storePermission = permissionRepository.findByPermName(permName)
+                .orElseThrow(() -> new ValidationException("[updatePermission]:    The RBAC permission entity [permName: %s] does not exist".formatted(permName)));
         validateSingleResourceType(permission.getResources(), "updatePermission");
-        BeanUtils.copyProperties(permission, storePermission, "id", "permName");
+        BeanUtils.copyProperties(permission, storePermission, "id");
         return permissionRepository.saveAndFlush(storePermission);
     }
 
     @Override
-    @Transactional
     public void deletePermission(@NotNull Permission permission) throws ServiceException {
-        requirePermName(permission);
+        NaturalKeys.requirePermName(permission);
         Permission storePermission = permissionRepository.findByPermName(permission.getPermName())
                 .orElseThrow(() -> new ValidationException("[deletePermission]:    The RBAC permission entity [permName: %s] does not exist".formatted(permission.getPermName())));
         Map<String, List<Long>> map = new HashMap<>();
@@ -185,31 +179,14 @@ public class AdminMgrImpl implements AdminMgr {
         }
     }
 
-    private void requireUsername(User user) throws ValidationException {
-        if (!StringUtils.hasText(user.getUsername())) {
-            throw new ValidationException("The RBAC user entity's username is required and cannot be null");
-        }
-    }
-
-    private void requireRoleName(Role role) throws ValidationException {
-        if (!StringUtils.hasText(role.getRoleName())) {
-            throw new ValidationException("The RBAC role entity's roleName is required and cannot be null");
-        }
-    }
-
-    private void requirePermName(Permission permission) throws ValidationException {
-        if (!StringUtils.hasText(permission.getPermName())) {
-            throw new ValidationException("The RBAC permission entity's permName is required and cannot be null");
-        }
-    }
-
     private record UserRoleIds(Long userId, Long roleId) {}
+
 
     private record PermissionRoleIds(Long permissionId, Long roleId) {}
 
     private UserRoleIds resolveUserRole(User user, Role role, String op) throws ValidationException {
-        requireUsername(user);
-        requireRoleName(role);
+        NaturalKeys.requireUsername(user);
+        NaturalKeys.requireRoleName(role);
         User storeUser = userRepository.findByUsername(user.getUsername())
                 .orElseThrow(() -> new ValidationException("[%s]:    The RBAC user[username: %s] does not exist".formatted(op, user.getUsername())));
         Role storeRole = roleRepository.findByRoleName(role.getRoleName())
@@ -218,8 +195,8 @@ public class AdminMgrImpl implements AdminMgr {
     }
 
     private PermissionRoleIds resolvePermissionRole(Permission permission, Role role, String op) throws ValidationException {
-        requirePermName(permission);
-        requireRoleName(role);
+        NaturalKeys.requirePermName(permission);
+        NaturalKeys.requireRoleName(role);
         Permission storePermission = permissionRepository.findByPermName(permission.getPermName())
                 .orElseThrow(() -> new ValidationException("[%s]:    The RBAC permission[permName: %s] does not exist".formatted(op, permission.getPermName())));
         Role storeRole = roleRepository.findByRoleName(role.getRoleName())

@@ -56,12 +56,15 @@ class AdminMgrImplTest {
     @Commit
     void testUpdateUser() throws ServiceException {
         Assertions.assertThrows(ValidationException.class,
-                () -> adminMgr.updateUser(RBACEntityConstants.USER));
-        Assertions.assertThrows(ValidationException.class,
-                () -> adminMgr.updateUser(RBACEntityConstants.NOT_EXIST_USER));
+                () -> adminMgr.updateUser("notExistUser", new User()));
         User addUser = adminMgr.addUser(User.builder().username("adm-updateUser").build());
         addUser.setDescription("update user");
-        Assertions.assertEquals(adminMgr.updateUser(addUser).getDescription(), "update user");
+        Assertions.assertEquals("update user", adminMgr.updateUser("adm-updateUser", addUser).getDescription());
+        entityManager.detach(addUser);
+        addUser.setUsername("adm-updateUser-renamed");
+        adminMgr.updateUser("adm-updateUser", addUser);
+        Assertions.assertTrue(reviewMgr.readUser(User.builder().username("adm-updateUser-renamed").build()).isPresent());
+        Assertions.assertTrue(reviewMgr.readUser(User.builder().username("adm-updateUser").build()).isEmpty());
     }
 
     @Test
@@ -86,12 +89,15 @@ class AdminMgrImplTest {
     @Commit
     void testUpdateRole() throws ServiceException {
         Assertions.assertThrows(ValidationException.class,
-                () -> adminMgr.updateRole(RBACEntityConstants.ROLE));
-        Assertions.assertThrows(ValidationException.class,
-                () -> adminMgr.updateRole(RBACEntityConstants.NOT_EXIST_ROLE));
+                () -> adminMgr.updateRole("notExistRole", new Role()));
         Role addRole = adminMgr.addRole(Role.builder().roleName("adm-updateRole").build());
         addRole.setDescription("update role");
-        Assertions.assertEquals(adminMgr.updateRole(addRole).getDescription(), "update role");
+        Assertions.assertEquals("update role", adminMgr.updateRole("adm-updateRole", addRole).getDescription());
+        entityManager.detach(addRole);
+        addRole.setRoleName("adm-updateRole-renamed");
+        adminMgr.updateRole("adm-updateRole", addRole);
+        Assertions.assertTrue(reviewMgr.readRole(Role.builder().roleName("adm-updateRole-renamed").build()).isPresent());
+        Assertions.assertTrue(reviewMgr.readRole(Role.builder().roleName("adm-updateRole").build()).isEmpty());
     }
 
     @Test
@@ -165,8 +171,8 @@ class AdminMgrImplTest {
     @Test
     @Commit
     void updatePermission() throws ServiceException {
-        Assertions.assertThrows(ValidationException.class, () -> adminMgr.updatePermission(RBACEntityConstants.PERMISSION));
-        Assertions.assertThrows(ValidationException.class, () -> adminMgr.updatePermission(RBACEntityConstants.NOT_EXIST_PERMISSION));
+        Assertions.assertThrows(ValidationException.class,
+                () -> adminMgr.updatePermission("notExistPerm", RBACEntityConstants.PERMISSION));
 
         Resource resource1 = ExampleResource1.builder().message("this is a ExampleResource1").build();
         Set<Resource> objects = new HashSet<>();
@@ -176,13 +182,13 @@ class AdminMgrImplTest {
         permission1.getResources().add(resource2);
 
         Assertions.assertThrows(ValidationException.class,
-                () -> adminMgr.updatePermission(permission1));
+                () -> adminMgr.updatePermission("adm-updatePerm", permission1));
 
         permission1.getResources().remove(resource2);
         Resource resource11 = ExampleResource1.builder().message("this is a ExampleResource1").build();
         permission1.getResources().add(resource11);
         Assertions.assertDoesNotThrow(
-                () -> adminMgr.updatePermission(permission1));
+                () -> adminMgr.updatePermission("adm-updatePerm", permission1));
     }
 
     @Test

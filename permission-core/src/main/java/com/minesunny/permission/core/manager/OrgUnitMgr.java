@@ -34,7 +34,7 @@ public interface OrgUnitMgr {
     Post addPost(@NotNull Post post) throws ServiceException;
 
     @NotNull
-    Post updatePost(@NotNull Post post) throws ServiceException;
+    Post updatePost(@NotNull String postName, @NotNull Post post) throws ServiceException;
 
     void deletePost(@NotNull Post post) throws ServiceException;
 
@@ -52,7 +52,7 @@ public interface OrgUnitMgr {
     OrgUnit addOrgUnit(@NotNull OrgUnit orgUnit) throws ServiceException;
 
     @NotNull
-    OrgUnit updateOrgUnit(@NotNull OrgUnit orgUnit) throws ServiceException;
+    OrgUnit updateOrgUnit(@NotNull String orgName, @NotNull OrgUnit orgUnit) throws ServiceException;
 
     void deleteOrgUnit(@NotNull OrgUnit orgUnit) throws ServiceException;
 

@@ -46,19 +46,23 @@ class OrgUnitMgrImplTest {
 
     @Test
     void updatePost() throws ServiceException {
-        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.updatePost(Post.builder().build()));
-        Assertions.assertThrows(ValidationException.class, () -> orgUnitMgr.updatePost(RBACEntityConstants.NOT_EXIST_POST));
+        Assertions.assertThrows(ValidationException.class,
+                () -> orgUnitMgr.updatePost("notExistPost", Post.builder().build()));
 
         Post post = Post.builder().postName("org-updatePost").build();
         Post savedPost = orgUnitMgr.addPost(post);
 
-        savedPost.setPostName("org-updatePost");
         savedPost.setDescription("update post desc");
-
-        orgUnitMgr.updatePost(savedPost);
-        Optional<Post> optionalPost = orgUnitMgr.readPost(savedPost);
+        orgUnitMgr.updatePost("org-updatePost", savedPost);
+        Optional<Post> optionalPost = orgUnitMgr.readPost(Post.builder().postName("org-updatePost").build());
         Assertions.assertTrue(optionalPost.isPresent());
         Assertions.assertEquals("update post desc", optionalPost.get().getDescription());
+
+        entityManager.detach(savedPost);
+        savedPost.setPostName("org-updatePost-renamed");
+        orgUnitMgr.updatePost("org-updatePost", savedPost);
+        Assertions.assertTrue(orgUnitMgr.readPost(Post.builder().postName("org-updatePost-renamed").build()).isPresent());
+        Assertions.assertTrue(orgUnitMgr.readPost(Post.builder().postName("org-updatePost").build()).isEmpty());
     }
 
     @Test

@@ -16,12 +16,12 @@ import com.minesunny.permission.core.repository.PermissionRepository;
 import com.minesunny.permission.core.repository.RoleRepository;
 import com.minesunny.permission.core.repository.UserRepository;
 import com.minesunny.permission.core.type.MapTableConstants;
+import com.minesunny.permission.core.util.NaturalKeys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -38,9 +38,7 @@ public class ReviewMgrImpl implements ReviewMgr {
 
     @Override
     public Optional<User> readUser(@NotNull User user) throws ServiceException {
-        if (!StringUtils.hasText(user.getUsername())) {
-            throw new ValidationException("[readUser]:    The RBAC user's username is required and cannot be null");
-        }
+        NaturalKeys.requireUsername(user);
         return userRepository.findByUsername(user.getUsername());
     }
 
@@ -56,9 +54,7 @@ public class ReviewMgrImpl implements ReviewMgr {
 
     @Override
     public Optional<Role> readRole(@NotNull Role role) throws ServiceException {
-        if (!StringUtils.hasText(role.getRoleName())) {
-            throw new ValidationException("[readRole]:    The RBAC role's roleName is required and cannot be null");
-        }
+        NaturalKeys.requireRoleName(role);
         return roleRepository.findByRoleName(role.getRoleName());
     }
 
@@ -73,9 +69,7 @@ public class ReviewMgrImpl implements ReviewMgr {
 
     @Override
     public Optional<Permission> readPermission(@NotNull Permission permission) throws ServiceException {
-        if (!StringUtils.hasText(permission.getPermName())) {
-            throw new ValidationException("[readPermission]:    The RBAC permission's permName is required and cannot be null");
-        }
+        NaturalKeys.requirePermName(permission);
         return permissionRepository.findByPermName(permission.getPermName());
     }
 
