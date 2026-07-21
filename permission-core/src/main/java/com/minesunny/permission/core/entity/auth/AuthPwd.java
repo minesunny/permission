@@ -43,7 +43,7 @@ import java.util.Date;
 public class AuthPwd extends Auth {
 
 
-    @Column(name = "username", nullable = false)
+    @Column(name = "username", nullable = false, unique = true)
     @Comment(value = "user login name")
     private String username;
 
