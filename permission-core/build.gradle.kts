@@ -64,6 +64,6 @@ publishing {
 
 tasks.register("deploy") {
     group = "publishing"
-    description = "Publishes the artifact to the configured Maven repository (mvn deploy equivalent)."
-    dependsOn("publish")
+    description = "Publishes the artifact to the local Maven cache and the configured remote Maven repository (mvn deploy equivalent)."
+    dependsOn("publish", "publishToMavenLocal")
 }
