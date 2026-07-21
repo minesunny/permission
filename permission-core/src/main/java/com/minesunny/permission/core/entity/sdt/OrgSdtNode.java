@@ -12,7 +12,7 @@ import org.hibernate.annotations.Where;
 
 @NoArgsConstructor
 @Entity
-@SQLDelete(sql = "update t_org_sdt set delete_at = current_timestamp,version = ?1 where id in (?2) and delete_at is null")
+@SQLDelete(sql = "update t_org_sdt set delete_at = current_timestamp,version = ?2 where id in (?1) and delete_at is null")
 @Where(clause = "delete_at is null")
 @Getter
 @SuperBuilder
