@@ -48,6 +48,11 @@ public class OrgUnitMgrImpl implements OrgUnitMgr {
     public @NotNull Post updatePost(@NotNull String postName, @NotNull Post post) throws ServiceException {
         Post storePost = postRepository.findByPostName(postName)
                 .orElseThrow(() -> new ValidationException("[updatePost]:    The post entity [postName: %s] does not exist".formatted(postName)));
+        String newPostName = post.getPostName();
+        if (newPostName != null && !newPostName.equals(postName)
+                && postRepository.findByPostName(newPostName).isPresent()) {
+            throw new ValidationException("[updatePost]:    The post entity [postName: %s ] already exists".formatted(newPostName));
+        }
         BeanUtils.copyProperties(post, storePost, "id", "users");
         return postRepository.saveAndFlush(storePost);
     }
@@ -119,6 +124,11 @@ public class OrgUnitMgrImpl implements OrgUnitMgr {
     public @NotNull OrgUnit updateOrgUnit(@NotNull String orgName, @NotNull OrgUnit orgUnit) throws ServiceException {
         OrgUnit storeOrgUnit = orgRepository.findByOrgName(orgName)
                 .orElseThrow(() -> new ValidationException("[updateOrgUnit]:    The orgUnit entity [orgName: %s] does not exist".formatted(orgName)));
+        String newOrgName = orgUnit.getOrgName();
+        if (newOrgName != null && !newOrgName.equals(orgName)
+                && orgRepository.findByOrgName(newOrgName).isPresent()) {
+            throw new ValidationException("[updateOrgUnit]:    The orgUnit entity [orgName: %s ] already exists".formatted(newOrgName));
+        }
         BeanUtils.copyProperties(orgUnit, storeOrgUnit, "id", "users", "managerUsers");
         return orgRepository.saveAndFlush(storeOrgUnit);
     }

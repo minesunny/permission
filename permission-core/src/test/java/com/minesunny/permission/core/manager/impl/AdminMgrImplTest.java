@@ -65,6 +65,13 @@ class AdminMgrImplTest {
         adminMgr.updateUser("adm-updateUser", addUser);
         Assertions.assertTrue(reviewMgr.readUser(User.builder().username("adm-updateUser-renamed").build()).isPresent());
         Assertions.assertTrue(reviewMgr.readUser(User.builder().username("adm-updateUser").build()).isEmpty());
+
+        // renaming to an already-taken username is forbidden
+        User dup1 = adminMgr.addUser(User.builder().username("adm-updateUser-dup1").build());
+        adminMgr.addUser(User.builder().username("adm-updateUser-dup2").build());
+        Assertions.assertThrows(ValidationException.class,
+                () -> adminMgr.updateUser("adm-updateUser-dup1", User.builder().username("adm-updateUser-dup2").build()));
+        Assertions.assertTrue(reviewMgr.readUser(User.builder().username("adm-updateUser-dup1").build()).isPresent());
     }
 
     @Test
@@ -98,6 +105,13 @@ class AdminMgrImplTest {
         adminMgr.updateRole("adm-updateRole", addRole);
         Assertions.assertTrue(reviewMgr.readRole(Role.builder().roleName("adm-updateRole-renamed").build()).isPresent());
         Assertions.assertTrue(reviewMgr.readRole(Role.builder().roleName("adm-updateRole").build()).isEmpty());
+
+        // renaming to an already-taken roleName is forbidden
+        Role rdup1 = adminMgr.addRole(Role.builder().roleName("adm-updateRole-dup1").build());
+        adminMgr.addRole(Role.builder().roleName("adm-updateRole-dup2").build());
+        Assertions.assertThrows(ValidationException.class,
+                () -> adminMgr.updateRole("adm-updateRole-dup1", Role.builder().roleName("adm-updateRole-dup2").build()));
+        Assertions.assertTrue(reviewMgr.readRole(Role.builder().roleName("adm-updateRole-dup1").build()).isPresent());
     }
 
     @Test

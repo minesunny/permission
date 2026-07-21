@@ -48,6 +48,11 @@ public class AdminMgrImpl implements AdminMgr {
     public @NotNull User updateUser(@NotNull String username, @NotNull User user) throws ServiceException {
         User storeUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ValidationException("[updateUser]:    The RBAC user entity [username: %s] does not exist".formatted(username)));
+        String newUsername = user.getUsername();
+        if (newUsername != null && !newUsername.equals(username)
+                && userRepository.findByUsername(newUsername).isPresent()) {
+            throw new ValidationException("[updateUser]:    The RBAC user entity [username: %s ] already exists".formatted(newUsername));
+        }
         BeanUtils.copyProperties(user, storeUser, "id", "roles", "post", "managerOrgUnits", "orgUnits");
         return userRepository.saveAndFlush(storeUser);
     }
@@ -80,6 +85,11 @@ public class AdminMgrImpl implements AdminMgr {
     public @NotNull Role updateRole(@NotNull String roleName, @NotNull Role role) throws ServiceException {
         Role storeRole = roleRepository.findByRoleName(roleName)
                 .orElseThrow(() -> new ValidationException("[updateRole]:    The RBAC role entity [roleName: %s] does not exist".formatted(roleName)));
+        String newRoleName = role.getRoleName();
+        if (newRoleName != null && !newRoleName.equals(roleName)
+                && roleRepository.findByRoleName(newRoleName).isPresent()) {
+            throw new ValidationException("[updateRole]:    The RBAC role entity [roleName: %s ] already exists".formatted(newRoleName));
+        }
         BeanUtils.copyProperties(role, storeRole, "id", "users", "permissions");
         return roleRepository.saveAndFlush(storeRole);
     }
@@ -130,6 +140,11 @@ public class AdminMgrImpl implements AdminMgr {
     public @NotNull Permission updatePermission(@NotNull String permName, @NotNull Permission permission) throws ServiceException {
         Permission storePermission = permissionRepository.findByPermName(permName)
                 .orElseThrow(() -> new ValidationException("[updatePermission]:    The RBAC permission entity [permName: %s] does not exist".formatted(permName)));
+        String newPermName = permission.getPermName();
+        if (newPermName != null && !newPermName.equals(permName)
+                && permissionRepository.findByPermName(newPermName).isPresent()) {
+            throw new ValidationException("[updatePermission]:    The RBAC permission entity [permName: %s ] already exists".formatted(newPermName));
+        }
         validateSingleResourceType(permission.getResources(), "updatePermission");
         BeanUtils.copyProperties(permission, storePermission, "id");
         return permissionRepository.saveAndFlush(storePermission);
