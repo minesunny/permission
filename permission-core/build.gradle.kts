@@ -1,20 +1,16 @@
 plugins {
     java
     id("io.spring.dependency-management") version "1.1.6"
+    `maven-publish`
 }
 
 group = "com.minesunny.permission"
-version = "0.0.2"
+version = "1.0-SNAPSHOT"
 
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(21))
     }
-}
-
-repositories {
-    mavenLocal()
-    mavenCentral()
 }
 
 dependencyManagement {
@@ -45,4 +41,29 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+        }
+    }
+    repositories {
+        maven {
+            val releaseUrl = uri("https://packages.aliyun.com/6125a66357e7cd986dfac90b/maven/2131514-release-kucx67")
+            val snapshotUrl = uri("https://packages.aliyun.com/6125a66357e7cd986dfac90b/maven/2131514-snapshot-xjndpc")
+            url = if (version.toString().endsWith("SNAPSHOT")) snapshotUrl else releaseUrl
+            credentials {
+                username = providers.environmentVariable("MAVEN_USERNAME").getOrElse("")
+                password = providers.environmentVariable("MAVEN_PASSWORD").getOrElse("")
+            }
+        }
+    }
+}
+
+tasks.register("deploy") {
+    group = "publishing"
+    description = "Publishes the artifact to the configured Maven repository (mvn deploy equivalent)."
+    dependsOn("publish")
 }
