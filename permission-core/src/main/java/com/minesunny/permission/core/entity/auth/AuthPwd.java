@@ -43,9 +43,9 @@ import java.util.Date;
 public class AuthPwd extends Auth {
 
 
-    @Column(nullable = false)
-    @Comment(value = "用户表uuid")
-    private Long userId;
+    @Column(name = "username", nullable = false)
+    @Comment(value = "user login name")
+    private String username;
 
     @Column(nullable = false)
     @Comment(value = "历史密码")
