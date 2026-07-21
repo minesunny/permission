@@ -17,14 +17,9 @@ Source: final whole-branch review (2026-07-20). These items were intentionally *
 - Fix: read from the loaded entity: `optionalPermission.get().getRoles()`.
 - Pre-existing; untouched by this refactor.
 
-### F3. `@SQLDelete` parameter-order bug still on 4 entities
-- `version = ?1 where id in (?2)` (no-op soft-delete under Hibernate 6.2, which binds `?1`=id, `?2`=version) remains on:
-  - `entity/perm/Resource.java:39`
-  - `entity/perm/Operation.java:40`
-  - `entity/auth/AuthPwd.java:38`
-  - `entity/sdt/OrgSdtNode.java:15`
-- The same bug was fixed on User/Role/Permission/Post/OrgUnit in this refactor (their delete paths are tested). These 4 are unexercised by any current delete path.
-- Fix: swap to `version = ?2 where id in (?1)` (verified pattern). Recommended to batch now while context is fresh — the next delete path added against these entities will silently ship a no-op soft-delete.
+### F3. `@SQLDelete` parameter-order bug ~~still on 4 entities~~ — RESOLVED
+- Originally `version = ?1 where id in (?2)` (no-op soft-delete under Hibernate 6.2) on Resource/Operation/AuthPwd/OrgSdtNode.
+- **Fixed in this branch** (commit `298945d`) — swapped to `version = ?2 where id in (?1)` on all 4. (`AuditAuth.java` has only a commented-out `@SQLDelete`, left as-is.)
 
 ## Fragility / best-practice (working today)
 
