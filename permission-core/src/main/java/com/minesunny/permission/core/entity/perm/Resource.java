@@ -40,7 +40,7 @@ import org.hibernate.annotations.SQLDelete;
 public class Resource extends CachedIdEntity {
 
 
-    @Column(name = "resource_name")
+    @Column(name = "resource_name", unique = true, nullable = false)
     @Comment(value = "resourceName")
     private String resourceName;
 

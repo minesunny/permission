@@ -20,5 +20,8 @@ package com.minesunny.permission.core.repository;
 import com.minesunny.permission.core.entity.perm.Operation;
 import org.springframework.data.jpa.repository.support.JpaRepositoryImplementation;
 
+import java.util.Optional;
+
 public interface OperationRepository extends JpaRepositoryImplementation<Operation, Long> {
+    Optional<Operation> findByOperationName(String operationName);
 }

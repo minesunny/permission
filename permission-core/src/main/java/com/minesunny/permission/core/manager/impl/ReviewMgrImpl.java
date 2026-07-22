@@ -13,6 +13,7 @@ import com.minesunny.permission.core.exception.ValidationException;
 import com.minesunny.permission.core.manager.ReviewMgr;
 import com.minesunny.permission.core.repository.OperationRepository;
 import com.minesunny.permission.core.repository.PermissionRepository;
+import com.minesunny.permission.core.repository.ResourceRepository;
 import com.minesunny.permission.core.repository.RoleRepository;
 import com.minesunny.permission.core.repository.UserRepository;
 import com.minesunny.permission.core.type.MapTableConstants;
@@ -35,6 +36,7 @@ public class ReviewMgrImpl implements ReviewMgr {
     private final PermissionRepository permissionRepository;
     private final MapMgr mapMgr;
     private final OperationRepository operationRepository;
+    private final ResourceRepository resourceRepository;
 
     @Override
     public Optional<User> readUser(@NotNull User user) throws ServiceException {
@@ -139,9 +141,8 @@ public class ReviewMgrImpl implements ReviewMgr {
 
     @Override
     public @NotNull List<Operation> roleOperationsOnResource(@NotNull Role role, @NotNull Resource resource) throws ServiceException {
-        if (Objects.isNull(resource.getId())) {
-            throw new ValidationException("[roleOperationsOnResource]:    The RBAC resource entity is required and cannot be null");
-        }
+        Long resourceId = resourceRepository.findByResourceName(NaturalKeys.requireResourceName(resource))
+                .orElseThrow(() -> new ValidationException("[roleOperationsOnResource]:    The RBAC resource entity [resourceName: %s] does not exist".formatted(resource.getResourceName()))).getId();
         ReviewMgr reviewMgr = (ReviewMgr) AopContext.currentProxy();
         Optional<Role> optionalRole = reviewMgr.readRole(role);
         if (optionalRole.isEmpty()) {
@@ -152,7 +153,7 @@ public class ReviewMgrImpl implements ReviewMgr {
 
         // find which permission has resource
         List<Long> permissionIds = mapMgr
-                .find(MapTableConstants.PERMISSION_RESOURCE, "permission_id", "resource_id", List.of(resource.getId()))
+                .find(MapTableConstants.PERMISSION_RESOURCE, "permission_id", "resource_id", List.of(resourceId))
                 .stream().distinct().toList();
 
 
@@ -168,9 +169,8 @@ public class ReviewMgrImpl implements ReviewMgr {
 
     @Override
     public @NotNull List<Operation> userOperationsOnResource(@NotNull User user, @NotNull Resource resource) throws ServiceException {
-        if (Objects.isNull(resource.getId())) {
-            throw new ValidationException("[roleOperationsOnResource]:    The RBAC resource entity is required and cannot be null");
-        }
+        Long resourceId = resourceRepository.findByResourceName(NaturalKeys.requireResourceName(resource))
+                .orElseThrow(() -> new ValidationException("[userOperationsOnResource]:    The RBAC resource entity [resourceName: %s] does not exist".formatted(resource.getResourceName()))).getId();
         ReviewMgr reviewMgr = (ReviewMgr) AopContext.currentProxy();
         List<Long> roleIds = reviewMgr.assignedRoles(user)
                 .stream().map(Role::getId).toList();
@@ -180,7 +180,7 @@ public class ReviewMgrImpl implements ReviewMgr {
 
         // find which permission has resource
         List<Long> permissionIds = mapMgr.find(MapTableConstants.PERMISSION_RESOURCE, "permission_id", "resource_id",
-                        List.of(resource.getId())).stream().distinct()
+                        List.of(resourceId)).stream().distinct()
                 .filter(permissionsOnRoles::contains).toList();
 
         // find operations

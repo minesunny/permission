@@ -4,7 +4,9 @@ import com.minesunny.permission.core.entity.Role;
 import com.minesunny.permission.core.entity.actor.OrgUnit;
 import com.minesunny.permission.core.entity.actor.Post;
 import com.minesunny.permission.core.entity.actor.User;
+import com.minesunny.permission.core.entity.perm.Operation;
 import com.minesunny.permission.core.entity.perm.Permission;
+import com.minesunny.permission.core.entity.perm.Resource;
 import com.minesunny.permission.core.exception.ValidationException;
 import org.springframework.util.StringUtils;
 
@@ -31,6 +33,14 @@ public final class NaturalKeys {
 
     public static String requireOrgName(OrgUnit orgUnit) throws ValidationException {
         return require(orgUnit.getOrgName(), "orgUnit's orgName");
+    }
+
+    public static String requireResourceName(Resource resource) throws ValidationException {
+        return require(resource.getResourceName(), "resource's resourceName");
+    }
+
+    public static String requireOperationName(Operation operation) throws ValidationException {
+        return require(operation.getOperationName(), "operation's operationName");
     }
 
     public static String require(String value, String name) throws ValidationException {

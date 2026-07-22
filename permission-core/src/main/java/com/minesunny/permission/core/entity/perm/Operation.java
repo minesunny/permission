@@ -41,7 +41,7 @@ import org.hibernate.annotations.SQLDelete;
 public class Operation extends CachedIdEntity {
 
 
-    @Column(name = "operation_name")
+    @Column(name = "operation_name", unique = true, nullable = false)
     @Comment(value = "operationName")
     private String operationName;
 
