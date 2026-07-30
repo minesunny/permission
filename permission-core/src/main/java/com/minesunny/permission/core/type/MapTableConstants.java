@@ -18,19 +18,13 @@
 package com.minesunny.permission.core.type;
 
 public interface MapTableConstants {
-    String ROLE_USER = "t_role_user_map";
+    String ROLE_ACTOR = "t_role_actor_map";
 
     String ORG_UNIT_USER = "t_org_unit_user_map";
 
     String USER_ORG_UNIT = "t_user_org_unit_map";
 
-    String POST_USR = "t_post_user_map";
-
     String ROLE_PERMISSION = "t_role_permission_map";
 
     String POST_USER = "t_post_user_map";
-
-    String PERMISSION_RESOURCE = "t_permission_resource_map";
-    String PERMISSION_OPERATION = "t_permission_operation_map";
-
 }

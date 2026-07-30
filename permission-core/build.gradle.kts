@@ -1,5 +1,6 @@
 plugins {
     java
+    jacoco
     id("io.spring.dependency-management") version "1.1.6"
     `maven-publish`
 }
@@ -10,6 +11,17 @@ version = "1.0-SNAPSHOT"
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(21))
+    }
+    withSourcesJar()
+    withJavadocJar()
+}
+
+tasks.withType<Javadoc> {
+    options {
+        this as StandardJavadocDocletOptions
+        addStringOption("Xdoclint:none", "-quiet")
+        addStringOption("encoding", "UTF-8")
+        addStringOption("charSet", "UTF-8")
     }
 }
 
@@ -41,6 +53,15 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
 }
 
 publishing {

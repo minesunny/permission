@@ -17,11 +17,11 @@
  */
 package com.minesunny.permission.core.manager;
 
-import com.minesunny.jpa.exception.ServiceException;
 import com.minesunny.permission.core.entity.actor.OrgUnit;
 import com.minesunny.permission.core.entity.actor.Post;
 import com.minesunny.permission.core.entity.actor.User;
 import com.minesunny.permission.core.entity.sdt.OrgSdtNode;
+import com.minesunny.permission.core.exception.RBACException;
 import jakarta.transaction.Transactional;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,47 +30,40 @@ import java.util.Optional;
 
 @Transactional
 public interface OrgUnitMgr {
-    @NotNull
-    Post addPost(@NotNull Post post) throws ServiceException;
 
-    @NotNull
-    Post updatePost(@NotNull String postName, @NotNull Post post) throws ServiceException;
+    @NotNull Post addPost(@NotNull Post post) throws RBACException;
 
-    void deletePost(@NotNull Post post) throws ServiceException;
+    @NotNull Post updatePost(@NotNull String postName, @NotNull Post post) throws RBACException;
 
-    Optional<Post> readPost(@NotNull Post post) throws ServiceException;
+    void deletePost(@NotNull Post post) throws RBACException;
 
-    @NotNull
-    List<Post> readPosts(@NotNull Post post) throws ServiceException;
+    Optional<Post> readPost(@NotNull Post post) throws RBACException;
 
+    @NotNull List<Post> readPosts(@NotNull Post post) throws RBACException;
 
-    void bindPost(@NotNull Post post, @NotNull User user) throws ServiceException;
+    void bindPost(@NotNull Post post, @NotNull User user) throws RBACException;
 
-    void unbindPost(@NotNull Post post, @NotNull User user) throws ServiceException;
+    void unbindPost(@NotNull Post post, @NotNull User user) throws RBACException;
 
-    @NotNull
-    OrgUnit addOrgUnit(@NotNull OrgUnit orgUnit) throws ServiceException;
+    @NotNull OrgUnit addOrgUnit(@NotNull OrgUnit orgUnit) throws RBACException;
 
-    @NotNull
-    OrgUnit updateOrgUnit(@NotNull String orgName, @NotNull OrgUnit orgUnit) throws ServiceException;
+    @NotNull OrgUnit updateOrgUnit(@NotNull String orgName, @NotNull OrgUnit orgUnit) throws RBACException;
 
-    void deleteOrgUnit(@NotNull OrgUnit orgUnit) throws ServiceException;
+    void deleteOrgUnit(@NotNull OrgUnit orgUnit) throws RBACException;
 
-    Optional<OrgUnit> readOrgUnit(@NotNull OrgUnit orgUnit) throws ServiceException;
+    Optional<OrgUnit> readOrgUnit(@NotNull OrgUnit orgUnit) throws RBACException;
 
-    @NotNull
-    List<OrgUnit> readOrgUnits(@NotNull OrgUnit orgUnit) throws ServiceException;
+    @NotNull List<OrgUnit> readOrgUnits(@NotNull OrgUnit orgUnit) throws RBACException;
 
-    void bindOrgUnit(@NotNull User user, @NotNull OrgUnit orgUnit) throws ServiceException;
+    void bindOrgUnit(@NotNull User user, @NotNull OrgUnit orgUnit) throws RBACException;
 
-    void unbindOrgUnit(@NotNull User user, @NotNull OrgUnit orgUnit) throws ServiceException;
+    void unbindOrgUnit(@NotNull User user, @NotNull OrgUnit orgUnit) throws RBACException;
 
-    void bindOrgUnitNode(@NotNull OrgSdtNode childOrgNode, @NotNull OrgSdtNode parentOrgNode) throws ServiceException;
+    void bindOrgUnitNode(@NotNull OrgSdtNode childOrgNode, @NotNull OrgSdtNode parentOrgNode) throws RBACException;
 
-    void unbindOrgUnitNode(@NotNull OrgSdtNode childOrgNode) throws ServiceException;
+    void unbindOrgUnitNode(@NotNull OrgSdtNode childOrgNode) throws RBACException;
 
-    void bindManagerUser(@NotNull User user, @NotNull OrgUnit orgUnit) throws ServiceException;
+    void bindManagerUser(@NotNull User user, @NotNull OrgUnit orgUnit) throws RBACException;
 
-    void unbindManagerUser(@NotNull User user, @NotNull OrgUnit orgUnit) throws ServiceException;
-
+    void unbindManagerUser(@NotNull User user, @NotNull OrgUnit orgUnit) throws RBACException;
 }

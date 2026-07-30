@@ -20,8 +20,8 @@ package com.minesunny.permission.core.type;
 import com.minesunny.permission.core.entity.Role;
 import com.minesunny.permission.core.entity.actor.OrgUnit;
 import com.minesunny.permission.core.entity.actor.Post;
+import com.minesunny.permission.core.entity.actor.Actor;
 import com.minesunny.permission.core.entity.actor.User;
-import com.minesunny.permission.core.entity.perm.Operation;
 import com.minesunny.permission.core.entity.perm.Permission;
 
 public interface RBACEntityConstants {
@@ -31,6 +31,9 @@ public interface RBACEntityConstants {
     Role ROLE = new Role();
     User NOT_EXIST_USER = User.builder().username("notExistUser").build();
     User USER = new User();
+
+    /** Empty Actor (no actorName) used to verify that readActor() throws on missing natural key. */
+    Actor ACTOR = new User();
 
     OrgUnit NOT_EXIST_ORG_UNIT = OrgUnit.builder().orgName("notExistOrgUnit").build();
 
@@ -46,6 +49,4 @@ public interface RBACEntityConstants {
     Post NOT_EXIST_POST = Post.builder().postName("notExistPost").build();
 
     Post POST = new Post();
-
-    Operation OPERATION = Operation.builder().build();
 }

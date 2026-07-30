@@ -1,11 +1,12 @@
 package com.minesunny.permission.core.manager.impl;
 
 import com.minesunny.jpa.autoconfigure.BaseJpaAutoConfiguration;
-import com.minesunny.jpa.exception.ServiceException;
 import com.minesunny.permission.core.autoconfigure.PermissionAutoConfiguration;
 import com.minesunny.permission.core.entity.Role;
+import com.minesunny.permission.core.entity.actor.Actor;
 import com.minesunny.permission.core.entity.actor.User;
 import com.minesunny.permission.core.entity.perm.Permission;
+import com.minesunny.permission.core.exception.RBACException;
 import com.minesunny.permission.core.exception.ValidationException;
 import com.minesunny.permission.core.manager.AdminMgr;
 import com.minesunny.permission.core.manager.ReviewMgr;
@@ -35,36 +36,53 @@ class ReviewMgrImplTest {
     @Autowired
     private ReviewMgr reviewMgr;
 
+    /** Helper: create and persist a User Actor (actorName = username). */
+    private User newUser(String name) throws RBACException {
+        return adminMgr.addActor(User.builder().actorName(name).username(name).build());
+    }
+
+    // ------------------------------------------------------------------
+    // readActor / readActors
+    // ------------------------------------------------------------------
     @Test
     @Commit
-    void testReadUser() throws ServiceException {
-        assertThrows(ValidationException.class, () -> reviewMgr.readUser(RBACEntityConstants.USER));
-        User user = User.builder().username("rev-readUser").description("test readUser").build();
+    void testReadActor() throws RBACException {
+        // Empty actor (no actorName) → requireActorName throws ValidationException
+        assertThrows(ValidationException.class, () -> reviewMgr.readActor(RBACEntityConstants.ACTOR));
 
-        Optional<User> readUser = reviewMgr.readUser(adminMgr.addUser(user));
-        assertTrue(readUser.isPresent());
-        assertEquals("test readUser", readUser.get().getDescription());
+        User user = User.builder()
+                .actorName("rev-readActor")
+                .username("rev-readActor")
+                .description("test readActor")
+                .build();
+        Actor saved = adminMgr.addActor(user);
 
-        user.andEq("description");
-        List<User> users = reviewMgr.readUsers(user);
-        assertFalse(users.isEmpty());
-        assertEquals("test readUser", users.get(0).getDescription());
+        Optional<Actor> readActor = reviewMgr.readActor(saved);
+        assertTrue(readActor.isPresent());
+        // JPA JOINED inheritance returns the concrete subtype; cast is safe
+        assertEquals("test readActor", ((User) readActor.get()).getDescription());
     }
 
     @Test
     @Commit
-    void testReadUsers() throws ServiceException {
-        assertThrows(ValidationException.class, () -> reviewMgr.readUsers(RBACEntityConstants.USER));
-        assertDoesNotThrow(() -> adminMgr.addUser(User.builder().username("rev-readUsers-1").description("abcdefg").build()));
-        assertDoesNotThrow(() -> adminMgr.addUser(User.builder().username("rev-readUsers-2").description("abc").build()));
+    void testReadActors() throws RBACException {
+        // No search condition → ValidationException
+        assertThrows(ValidationException.class, () -> reviewMgr.readActors(RBACEntityConstants.ACTOR));
 
-        List<User> users = reviewMgr.readUsers(User.builder().description("abc").build().like("description", true));
-        assertEquals(2, users.size());
+        adminMgr.addActor(User.builder().actorName("rev-readActors-1").username("rev-readActors-1").build());
+        adminMgr.addActor(User.builder().actorName("rev-readActors-2").username("rev-readActors-2").build());
+
+        List<Actor> actors = reviewMgr.readActors(
+                User.builder().actorName("rev-readActors").build().like("actorName", true));
+        assertEquals(2, actors.size());
     }
 
+    // ------------------------------------------------------------------
+    // readRole / readRoles
+    // ------------------------------------------------------------------
     @Test
     @Commit
-    void testReadRole() throws ServiceException {
+    void testReadRole() throws RBACException {
         assertThrows(ValidationException.class, () -> reviewMgr.readRole(RBACEntityConstants.ROLE));
         Role role = Role.builder().roleName("rev-readRole").description("test testReadRole").build();
 
@@ -80,24 +98,27 @@ class ReviewMgrImplTest {
 
     @Test
     @Commit
-    void testReadRoles() throws ServiceException {
+    void testReadRoles() throws RBACException {
         assertThrows(ValidationException.class, () -> reviewMgr.readRoles(RBACEntityConstants.ROLE));
-        assertDoesNotThrow(() -> adminMgr.addRole(Role.builder().roleName("rev-readRoles-1").description("abcdefg").build()));
-        assertDoesNotThrow(() -> adminMgr.addRole(Role.builder().roleName("rev-readRoles-2").description("abc").build()));
+        adminMgr.addRole(Role.builder().roleName("rev-readRoles-1").description("abcdefg").build());
+        adminMgr.addRole(Role.builder().roleName("rev-readRoles-2").description("abc").build());
 
         List<Role> roles = reviewMgr.readRoles(Role.builder().description("abc").build().like("description", true));
         assertEquals(2, roles.size());
     }
 
+    // ------------------------------------------------------------------
+    // readPermission / readPermissions
+    // ------------------------------------------------------------------
     @Test
     @Commit
-    void testReadPermission() throws ServiceException {
+    void testReadPermission() throws RBACException {
         assertThrows(ValidationException.class, () -> reviewMgr.readPermission(RBACEntityConstants.PERMISSION));
         Permission permission = Permission.builder().permName("rev-readPerm").description("test testReadPermission").build();
 
         Optional<Permission> readPermission = reviewMgr.readPermission(adminMgr.addPermission(permission));
         assertTrue(readPermission.isPresent());
-        assertEquals(readPermission.get().getDescription(), "test testReadPermission");
+        assertEquals("test testReadPermission", readPermission.get().getDescription());
 
         permission.andEq("description");
         List<Permission> permissions = reviewMgr.readPermissions(permission);
@@ -107,18 +128,22 @@ class ReviewMgrImplTest {
 
     @Test
     @Commit
-    void testReadPermissions() throws ServiceException {
+    void testReadPermissions() throws RBACException {
         assertThrows(ValidationException.class, () -> reviewMgr.readPermission(RBACEntityConstants.PERMISSION));
-        assertDoesNotThrow(() -> adminMgr.addPermission(Permission.builder().permName("rev-readPerms-1").description("abcdefg").build()));
-        assertDoesNotThrow(() -> adminMgr.addPermission(Permission.builder().permName("rev-readPerms-2").description("abc").build()));
+        adminMgr.addPermission(Permission.builder().permName("rev-readPerms-1").description("abcdefg").build());
+        adminMgr.addPermission(Permission.builder().permName("rev-readPerms-2").description("abc").build());
 
-        List<Permission> permissions = reviewMgr.readPermissions(Permission.builder().description("abc").build().like("description", true));
+        List<Permission> permissions = reviewMgr.readPermissions(
+                Permission.builder().description("abc").build().like("description", true));
         assertEquals(2, permissions.size());
     }
 
+    // ------------------------------------------------------------------
+    // rolePermissions
+    // ------------------------------------------------------------------
     @Test
     @Commit
-    void testRolePermissions() throws ServiceException {
+    void testRolePermissions() throws RBACException {
         assertEquals(0, reviewMgr.rolePermissions(RBACEntityConstants.NOT_EXIST_ROLE).size());
 
         Role role = adminMgr.addRole(Role.builder().roleName("rev-rolePerms").build());
@@ -126,59 +151,65 @@ class ReviewMgrImplTest {
         Permission p2 = adminMgr.addPermission(Permission.builder().permName("rev-rolePerms-p2").build());
         adminMgr.grantPermission(p1, role);
         adminMgr.grantPermission(p2, role);
-        List<Permission> permissions = reviewMgr.rolePermissions(role);
 
+        List<Permission> permissions = reviewMgr.rolePermissions(role);
         assertTrue(permissions.contains(p1));
         assertTrue(permissions.contains(p2));
     }
 
+    // ------------------------------------------------------------------
+    // actorPermissions
+    // ------------------------------------------------------------------
     @Test
     @Commit
-    void testUserPermissions() throws ServiceException {
-        assertEquals(reviewMgr.userPermissions(RBACEntityConstants.NOT_EXIST_USER).size(), 0);
+    void testActorPermissions() throws RBACException {
+        assertEquals(0, reviewMgr.actorPermissions(RBACEntityConstants.NOT_EXIST_USER).size());
 
-        Role role = adminMgr.addRole(Role.builder().roleName("rev-userPerms-role").build());
-        User user = adminMgr.addUser(User.builder().username("rev-userPerms-user").build());
-        Permission p1 = adminMgr.addPermission(Permission.builder().permName("rev-userPerms-p1").build());
-        Permission p2 = adminMgr.addPermission(Permission.builder().permName("rev-userPerms-p2").build());
+        Role role = adminMgr.addRole(Role.builder().roleName("rev-actorPerms-role").build());
+        User user = newUser("rev-actorPerms-user");
+        Permission p1 = adminMgr.addPermission(Permission.builder().permName("rev-actorPerms-p1").build());
+        Permission p2 = adminMgr.addPermission(Permission.builder().permName("rev-actorPerms-p2").build());
         adminMgr.grantPermission(p1, role);
         adminMgr.grantPermission(p2, role);
-        adminMgr.assignUser(user, role);
+        adminMgr.assignActor(user, role);
 
-        List<Permission> permissions = reviewMgr.userPermissions(user);
-
+        List<Permission> permissions = reviewMgr.actorPermissions(user);
         assertTrue(permissions.contains(p1));
         assertTrue(permissions.contains(p2));
     }
 
+    // ------------------------------------------------------------------
+    // assignedActors
+    // ------------------------------------------------------------------
     @Test
     @Commit
-    void testAssignedUsers() throws ServiceException {
-        assertEquals(reviewMgr.assignedUsers(RBACEntityConstants.NOT_EXIST_ROLE).size(), 0);
+    void testAssignedActors() throws RBACException {
+        assertEquals(0, reviewMgr.assignedActors(RBACEntityConstants.NOT_EXIST_ROLE).size());
 
-        Role role = adminMgr.addRole(Role.builder().roleName("rev-assignedUsers-role").build());
-        User user1 = adminMgr.addUser(User.builder().username("rev-assignedUsers-u1").build());
-        User user2 = adminMgr.addUser(User.builder().username("rev-assignedUsers-u2").build());
+        Role role = adminMgr.addRole(Role.builder().roleName("rev-assignedActors-role").build());
+        User user1 = newUser("rev-assignedActors-u1");
+        User user2 = newUser("rev-assignedActors-u2");
+        adminMgr.assignActor(user1, role);
+        adminMgr.assignActor(user2, role);
 
-        adminMgr.assignUser(user1, role);
-        adminMgr.assignUser(user2, role);
-
-        List<User> users = reviewMgr.assignedUsers(role);
-        assertTrue(users.contains(user1));
-        assertTrue(users.contains(user2));
+        List<Actor> actors = reviewMgr.assignedActors(role);
+        assertTrue(actors.contains(user1));
+        assertTrue(actors.contains(user2));
     }
 
+    // ------------------------------------------------------------------
+    // assignedRoles
+    // ------------------------------------------------------------------
     @Test
     @Commit
-    void testAssignedRoles() throws ServiceException {
-        assertEquals(reviewMgr.assignedRoles(RBACEntityConstants.NOT_EXIST_USER).size(), 0);
+    void testAssignedRoles() throws RBACException {
+        assertEquals(0, reviewMgr.assignedRoles(RBACEntityConstants.NOT_EXIST_USER).size());
 
         Role role1 = adminMgr.addRole(Role.builder().roleName("rev-assignedRoles-r1").build());
         Role role2 = adminMgr.addRole(Role.builder().roleName("rev-assignedRoles-r2").build());
-        User user = adminMgr.addUser(User.builder().username("rev-assignedRoles-user").build());
-
-        adminMgr.assignUser(user, role1);
-        adminMgr.assignUser(user, role2);
+        User user = newUser("rev-assignedRoles-user");
+        adminMgr.assignActor(user, role1);
+        adminMgr.assignActor(user, role2);
 
         List<Role> roles = reviewMgr.assignedRoles(user);
         assertTrue(roles.contains(role1));

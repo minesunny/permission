@@ -18,6 +18,7 @@
 package com.minesunny.permission.core.entity;
 
 import com.minesunny.jpa.entity.CachedIdEntity;
+import com.minesunny.permission.core.entity.actor.Actor;
 import com.minesunny.permission.core.entity.actor.User;
 import com.minesunny.permission.core.entity.perm.Permission;
 import jakarta.persistence.Table;
@@ -55,12 +56,12 @@ public class Role extends CachedIdEntity {
 
 
     @ManyToMany
-    @Comment("users has the role")
-    @JoinTable(name = "t_role_user_map",
+    @Comment("actors has the role")
+    @JoinTable(name = "t_role_actor_map",
             joinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"))
+            inverseJoinColumns = @JoinColumn(name = "actor_id", referencedColumnName = "id"))
     @Fetch(FetchMode.SELECT)
-    private Set<User> users;
+    private Set<Actor> actors;
 
     @Comment(value = "perms  relate to this role")
     @ManyToMany

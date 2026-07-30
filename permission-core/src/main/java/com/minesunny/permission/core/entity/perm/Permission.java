@@ -51,19 +51,13 @@ public class Permission extends CachedIdEntity {
     @Comment(value = "detail description of this perm")
     private String description;
 
+    @Column(name = "resource")
     @Comment(value = "permission resource")
-    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
-    @JoinTable(name = "t_permission_resource_map",
-            joinColumns = @JoinColumn(name = "permission_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "resource_id", referencedColumnName = "id"))
-    private Set<Resource> resources;
+    private String resource;
 
+    @Column(name = "operation")
     @Comment(value = "define what operation of the resource")
-    @ManyToMany
-    @JoinTable(name = "t_permission_operation_map",
-            joinColumns = @JoinColumn(name = "permission_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "operation_id", referencedColumnName = "id"))
-    private Set<Operation> operations;
+    private String operation;
 
     @Column(name = "perm_type")
     @Comment(value = "perm type")

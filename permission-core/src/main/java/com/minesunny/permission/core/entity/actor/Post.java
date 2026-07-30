@@ -26,6 +26,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.*;
+import jakarta.persistence.DiscriminatorValue;
 
 import java.util.Set;
 
@@ -34,12 +35,11 @@ import java.util.Set;
 @AllArgsConstructor
 @Table(name = "t_post")
 @Comment("岗位信息")
-@SQLDelete(sql = "update t_post set delete_at = current_timestamp, version = ?2 where id in (?1) and delete_at is null")
-@Where(clause = "delete_at is null")
 @Setter
 @Getter
 @SuperBuilder
-public class Post extends CachedIdEntity {
+@DiscriminatorValue("post")
+public class Post extends Actor {
 
 
     @Column(name = "post_name", unique = true, nullable = false)

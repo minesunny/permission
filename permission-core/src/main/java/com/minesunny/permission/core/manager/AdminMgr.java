@@ -18,10 +18,10 @@
 package com.minesunny.permission.core.manager;
 
 
-import com.minesunny.jpa.exception.ServiceException;
 import com.minesunny.permission.core.entity.Role;
-import com.minesunny.permission.core.entity.actor.User;
+import com.minesunny.permission.core.entity.actor.Actor;
 import com.minesunny.permission.core.entity.perm.Permission;
+import com.minesunny.permission.core.exception.RBACException;
 import jakarta.transaction.Transactional;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,112 +30,80 @@ import org.jetbrains.annotations.NotNull;
 public interface AdminMgr {
 
     /**
-     * This command creates a new RBAC user. The command is valid only if the new user is
-     * not already a member of the USERS data set. The USER data set is updated. The new user
-     * does not own any session at the time of its creation.
+     * This command creates a new RBAC actor (User / Post / OrgUnit). The command is valid
+     * only if the new actor is not already a member of the ACTORS data set (identified by
+     * actorName). The ACTORS data set is updated.
      *
-     * @param user
-     * @return
+     * @param actor actor to add (any subtype of Actor)
+     * @param <T>   concrete Actor subtype
+     * @return the persisted actor with ID assigned
      */
     @NotNull
-    User addUser(@NotNull User user) throws ServiceException;
-
-    @NotNull
-    User updateUser(@NotNull String username, @NotNull User user) throws ServiceException;
-
+    <T extends Actor> T addActor(@NotNull T actor) throws RBACException;
 
     /**
-     * This command deletes an existing user from the RBAC database. The command is valid
-     * if and only if the user to be deleted is a member of the USERS data set. The USERS and
-     * UA data sets and the assigned_users function are updated. It is an implementation
-     * decision how to proceed with the sessions owned by the user to be deleted. The RBAC
-     * system could wait for such a session to terminate normally, or it could force its
-     * termination.
+     * This command updates an existing actor identified by {@code actorName}. Only scalar
+     * fields are updated; relationship collections (roles, post, orgUnits, etc.) are excluded.
      *
-     * @param user
+     * @param actorName current actorName of the actor to update
+     * @param actor     object carrying the new field values
+     * @param <T>       concrete Actor subtype
+     * @return the updated, persisted actor
      */
-    void deleteUser(@NotNull User user) throws ServiceException;
+    @NotNull
+    <T extends Actor> T updateActor(@NotNull String actorName, @NotNull T actor) throws RBACException;
+
+    /**
+     * This command deletes an existing actor from the RBAC database. All role assignments
+     * of the actor are removed before deletion.
+     *
+     * @param actor actor to delete (must have either id or actorName set)
+     */
+    void deleteActor(@NotNull Actor actor) throws RBACException;
 
 
     /**
      * This command creates a new role. The command is valid if and only if the new role is not
-     * already a member of the ROLES data set. The ROLES data set and the functions
-     * assigned_users and assigned_permissions are updated. Initially, no user or permission is
-     * assigned to the new role.
-     *
-     * @param role
-     * @return
+     * already a member of the ROLES data set.
      */
     @NotNull
-    Role addRole(@NotNull Role role) throws ServiceException;
+    Role addRole(@NotNull Role role) throws RBACException;
 
     @NotNull
-    Role updateRole(@NotNull String roleName, @NotNull Role role) throws ServiceException;
+    Role updateRole(@NotNull String roleName, @NotNull Role role) throws RBACException;
+
+    /**
+     * This command deletes an existing role from the RBAC database.
+     */
+    void deleteRole(@NotNull Role role) throws RBACException;
 
 
     /**
-     * This command deletes an existing role from the RBAC database. The command is valid
-     * if and only if the role to be deleted is a member of the ROLES data set. It is an
-     * implementation decision how to proceed with the sessions in which the role to be deleted
-     * is active. The RBAC system could wait for such a session to terminate normally, it could
-     * force the termination of that session, or it could delete the role from that session while
-     * allowing the session to continue.
-     *
-     * @param role
+     * This command assigns an actor to a role.
      */
-    void deleteRole(@NotNull Role role) throws ServiceException;
-
+    void assignActor(@NotNull Actor actor, @NotNull Role role) throws RBACException;
 
     /**
-     * This command assigns a user to a role. The command is valid if and only if the user is a
-     * member of the USERS data set, the role is a member of the ROLES data set, and the user
-     * is not already assigned to the role. The data set UA and the function assigned_users are
-     * updated to reflect the assignment.
-     *
-     * @param user
-     * @param role
+     * This command removes the assignment of an actor from a role.
      */
-    void assignUser(@NotNull User user, @NotNull Role role) throws ServiceException;
-
-    /**
-     * This command deletes the assignment of the user user to the role role. The command is
-     * valid if and only if the user is a member of the USERS data set, the role is a member of
-     * the ROLES data set, and the user is assigned to the role.
-     * It is an implementation decision how to proceed with the sessions in which the session
-     * user is user and one of his/her active roles is role. The RBAC system could wait for such
-     * a session to terminate normally, could force its termination, or could inactivate the role.
-     *
-     * @param user
-     * @param role
-     */
-    void deassignUser(@NotNull User user, @NotNull Role role) throws ServiceException;
+    void deassignActor(@NotNull Actor actor, @NotNull Role role) throws RBACException;
 
     @NotNull
-    Permission addPermission(@NotNull Permission permission) throws ServiceException;
+    Permission addPermission(@NotNull Permission permission) throws RBACException;
 
     @NotNull
-    Permission updatePermission(@NotNull String permName, @NotNull Permission permission) throws ServiceException;
+    Permission updatePermission(@NotNull String permName, @NotNull Permission permission) throws RBACException;
 
-    void deletePermission(@NotNull Permission permission) throws ServiceException;
-
-
-    /**
-     * This command grants a role the permission to perform an operation on an object to a role.
-     * The command may be implemented as granting permissions to a group corresponding to
-     * that role, i.e., setting the access control list of the object involved.
-     * The command is valid if and only if the pair (operation, object) represents a permission,
-     * and the role is a member of the ROLES data set.
-     *
-     * @param permission
-     * @param role
-     */
-    void grantPermission(@NotNull Permission permission, @NotNull Role role) throws ServiceException;
-
+    void deletePermission(@NotNull Permission permission) throws RBACException;
 
     /**
-     * @param permission
-     * @param role
+     * This command grants a role the permission to perform an operation on an object.
      */
-    void revokePermission(@NotNull Permission permission, @NotNull Role role) throws ServiceException;
+    void grantPermission(@NotNull Permission permission, @NotNull Role role) throws RBACException;
+
+    /**
+     * This command revokes a permission from a role.
+     */
+    void revokePermission(@NotNull Permission permission, @NotNull Role role) throws RBACException;
 
 }

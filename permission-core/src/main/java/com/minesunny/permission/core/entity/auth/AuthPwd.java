@@ -64,7 +64,7 @@ public class AuthPwd extends Auth {
     @Comment(value = "密码错误次数")
     private short pwdErrorCount;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     @Comment(value = "锁定日期（lockDate为空，即未被锁）")
     private Date lockDate;
 
