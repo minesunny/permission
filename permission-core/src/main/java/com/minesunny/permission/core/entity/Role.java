@@ -54,6 +54,10 @@ public class Role extends CachedIdEntity {
     @Comment(value = "detail description of this role")
     private String description;
 
+    @Column(name = "role_type")
+    @Comment(value = "role type")
+    private String roleType;
+
 
     @ManyToMany
     @Comment("actors has the role")
