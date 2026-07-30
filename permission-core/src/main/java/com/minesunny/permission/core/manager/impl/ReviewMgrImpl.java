@@ -6,13 +6,16 @@ import com.minesunny.jpa.manager.MapMgr;
 import com.minesunny.permission.core.entity.Role;
 import com.minesunny.permission.core.entity.Session;
 import com.minesunny.permission.core.entity.actor.Actor;
+import com.minesunny.permission.core.entity.actor.User;
 import com.minesunny.permission.core.entity.perm.Permission;
 import com.minesunny.permission.core.exception.RBACException;
 import com.minesunny.permission.core.exception.ValidationException;
 import com.minesunny.permission.core.manager.ReviewMgr;
 import com.minesunny.permission.core.repository.ActorRepository;
 import com.minesunny.permission.core.repository.PermissionRepository;
+import com.minesunny.permission.core.repository.PolicyRepository;
 import com.minesunny.permission.core.repository.RoleRepository;
+import com.minesunny.permission.core.repository.UserRepository;
 import com.minesunny.permission.core.type.MapTableConstants;
 import com.minesunny.permission.core.util.NaturalKeys;
 import lombok.RequiredArgsConstructor;
@@ -30,9 +33,32 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ReviewMgrImpl implements ReviewMgr {
     private final ActorRepository actorRepository;
+    private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
+    private final PolicyRepository policyRepository;
     private final MapMgr mapMgr;
+
+    private void populatePolicy(Permission permission) {
+        if (permission == null || permission.getId() == null) {
+            return;
+        }
+        Long policyId = null;
+        if (StringUtils.hasText(permission.getPolicyOwnerId())) {
+            Optional<User> userOpt = userRepository.findByUsername(permission.getPolicyOwnerId());
+            if (userOpt.isPresent()) {
+                policyId = policyRepository.findPolicyIdByPermissionIdAndUserId(permission.getId(), userOpt.get().getId())
+                        .orElse(null);
+            }
+        }
+        if (policyId == null) {
+            policyId = policyRepository.findTemplatePolicyIdByPermissionId(permission.getId())
+                    .orElse(null);
+        }
+        if (policyId != null) {
+            policyRepository.findById(policyId).ifPresent(permission::setPolicy);
+        }
+    }
 
     // -------------------------------------------------------------------------
     // Actor read
@@ -79,7 +105,12 @@ public class ReviewMgrImpl implements ReviewMgr {
     @Override
     public Optional<Permission> readPermission(@NotNull Permission permission) throws RBACException {
         NaturalKeys.requirePermName(permission);
-        return permissionRepository.findByPermName(permission.getPermName());
+        Optional<Permission> permOpt = permissionRepository.findByPermName(permission.getPermName());
+        permOpt.ifPresent(p -> {
+            p.setPolicyOwnerId(permission.getPolicyOwnerId());
+            populatePolicy(p);
+        });
+        return permOpt;
     }
 
     @Override
@@ -88,7 +119,12 @@ public class ReviewMgrImpl implements ReviewMgr {
         if (Objects.isNull(search)) {
             throw new ValidationException("[readPermissions]:    The RBAC permission searchCondition is required and cannot be null");
         }
-        return permissionRepository.findAll(search);
+        List<Permission> list = permissionRepository.findAll(search);
+        for (Permission p : list) {
+            p.setPolicyOwnerId(permission.getPolicyOwnerId());
+            populatePolicy(p);
+        }
+        return list;
     }
 
     // -------------------------------------------------------------------------
@@ -104,7 +140,11 @@ public class ReviewMgrImpl implements ReviewMgr {
             if (permissions == null || permissions.isEmpty()) {
                 return Collections.emptyList();
             }
-            return List.copyOf(permissions);
+            List<Permission> list = List.copyOf(permissions);
+            for (Permission p : list) {
+                populatePolicy(p);
+            }
+            return list;
         }
         return Collections.emptyList();
     }
@@ -125,6 +165,9 @@ public class ReviewMgrImpl implements ReviewMgr {
                 return Collections.emptyList();
             }
             Permission permission = new Permission();
+            if (actor instanceof User user) {
+                permission.setPolicyOwnerId(user.getUsername());
+            }
             for (Long permissionId : permissionIds) {
                 permission.setId(permissionId);
                 permission.orEq("id");
@@ -152,7 +195,11 @@ public class ReviewMgrImpl implements ReviewMgr {
     public @NotNull List<Permission> sessionPermissions(@NotNull Session session) throws RBACException {
         ReviewMgr reviewMgr = (ReviewMgr) AopContext.currentProxy();
         List<Role> roles = reviewMgr.sessionRoles(session);
-        return roles.stream().flatMap(role -> role.getPermissions().stream()).collect(Collectors.toList());
+        List<Permission> list = roles.stream().flatMap(role -> role.getPermissions().stream()).collect(Collectors.toList());
+        for (Permission p : list) {
+            populatePolicy(p);
+        }
+        return list;
     }
 
     // -------------------------------------------------------------------------
@@ -188,7 +235,19 @@ public class ReviewMgrImpl implements ReviewMgr {
             if (roles == null || roles.isEmpty()) {
                 return Collections.emptyList();
             }
-            return List.copyOf(roles);
+            List<Role> roleList = List.copyOf(roles);
+            String policyOwnerId = (actor instanceof User user) ? user.getUsername() : null;
+            for (Role role : roleList) {
+                if (role.getPermissions() != null) {
+                    for (Permission perm : role.getPermissions()) {
+                        if (policyOwnerId != null) {
+                            perm.setPolicyOwnerId(policyOwnerId);
+                        }
+                        populatePolicy(perm);
+                    }
+                }
+            }
+            return roleList;
         }
         return Collections.emptyList();
     }

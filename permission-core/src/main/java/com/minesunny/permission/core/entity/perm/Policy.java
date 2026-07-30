@@ -22,7 +22,7 @@ import org.hibernate.annotations.SQLDelete;
 @SQLDelete(sql = "update t_policy set delete_at = current_timestamp, version = ?2 where id in (?1) and delete_at is null")
 public class Policy extends CachedIdEntity {
 
-    @Column(name = "policy_name", unique = true, nullable = false)
+    @Column(name = "policy_name", nullable = false)
     @Comment(value = "policyName")
     private String policyName;
 
@@ -33,6 +33,10 @@ public class Policy extends CachedIdEntity {
     @Column(name = "owner_id")
     @Comment(value = "owner id (username/actorName)")
     private String ownerId;
+
+    @Column(name = "perm_id")
+    @Comment(value = "permission id")
+    private Long permId;
 
     @Override
     public int hashCode() {
