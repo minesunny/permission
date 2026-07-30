@@ -6,6 +6,7 @@ import com.minesunny.permission.core.entity.actor.OrgUnit;
 import com.minesunny.permission.core.entity.actor.Post;
 import com.minesunny.permission.core.entity.actor.User;
 import com.minesunny.permission.core.entity.perm.Permission;
+import com.minesunny.permission.core.entity.perm.Policy;
 import com.minesunny.permission.core.exception.ValidationException;
 import org.springframework.util.StringUtils;
 
@@ -36,6 +37,10 @@ public final class NaturalKeys {
 
     public static String requireOrgName(OrgUnit orgUnit) throws ValidationException {
         return require(orgUnit.getOrgName(), "orgUnit's orgName");
+    }
+
+    public static String requirePolicyName(Policy policy) throws ValidationException {
+        return require(policy.getPolicyName(), "policy's policyName");
     }
 
     public static String require(String value, String name) throws ValidationException {

@@ -67,4 +67,9 @@ public class Permission extends CachedIdEntity {
             targetEntity = Role.class)
     private Set<Role> roles;
 
+    @Transient
+    private Policy policy;
+
+    @Transient
+    private Long policyOwnerId;
 }
