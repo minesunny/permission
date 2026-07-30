@@ -256,4 +256,58 @@ class AdminMgrImplTest {
         Assertions.assertThrows(ValidationException.class,
                 () -> adminMgr.revokePermission(permission1, role));
     }
+
+    @Test
+    @Commit
+    void testAddPermissionWithPolicyTemplate() throws RBACException {
+        com.minesunny.permission.core.entity.perm.Policy policy = com.minesunny.permission.core.entity.perm.Policy.builder()
+                .policyName("template-policy-1")
+                .description("template policy description")
+                .build();
+
+        Permission permission = Permission.builder()
+                .permName("perm-with-template")
+                .resource("res-tmpl")
+                .operation("read")
+                .policy(policy)
+                .build();
+
+        Permission savedPerm = adminMgr.addPermission(permission);
+        Assertions.assertNotNull(savedPerm);
+        Assertions.assertNotNull(savedPerm.getPolicy());
+        Assertions.assertNotNull(savedPerm.getPolicy().getId());
+    }
+
+    @Test
+    @Commit
+    void testPermissionPolicyCRUD() throws RBACException {
+        User user = User.builder().actorName("policy-user-1").username("policy-user-1").build();
+        adminMgr.addActor(user);
+
+        Permission permission = Permission.builder()
+                .permName("perm-policy-crud")
+                .resource("res-crud")
+                .operation("write")
+                .build();
+        adminMgr.addPermission(permission);
+
+        com.minesunny.permission.core.entity.perm.Policy userPolicy1 = com.minesunny.permission.core.entity.perm.Policy.builder()
+                .policyName("user-policy-1")
+                .description("user policy 1")
+                .build();
+
+        Assertions.assertDoesNotThrow(() -> adminMgr.addPermissionPolicy("policy-user-1", "perm-policy-crud", userPolicy1));
+
+        Assertions.assertThrows(ValidationException.class, () ->
+                adminMgr.addPermissionPolicy("policy-user-1", "perm-policy-crud", userPolicy1));
+
+        com.minesunny.permission.core.entity.perm.Policy userPolicy2 = com.minesunny.permission.core.entity.perm.Policy.builder()
+                .policyName("user-policy-2")
+                .description("user policy 2")
+                .build();
+
+        Assertions.assertDoesNotThrow(() -> adminMgr.updatePermissionPolicy("policy-user-1", "perm-policy-crud", userPolicy2));
+
+        Assertions.assertDoesNotThrow(() -> adminMgr.deletePermissionPolicy("policy-user-1", "perm-policy-crud"));
+    }
 }

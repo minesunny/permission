@@ -8,12 +8,15 @@ import com.minesunny.permission.core.entity.actor.OrgUnit;
 import com.minesunny.permission.core.entity.actor.Post;
 import com.minesunny.permission.core.entity.actor.User;
 import com.minesunny.permission.core.entity.perm.Permission;
+import com.minesunny.permission.core.entity.perm.Policy;
 import com.minesunny.permission.core.exception.RBACException;
 import com.minesunny.permission.core.exception.ValidationException;
 import com.minesunny.permission.core.manager.AdminMgr;
 import com.minesunny.permission.core.repository.ActorRepository;
 import com.minesunny.permission.core.repository.PermissionRepository;
+import com.minesunny.permission.core.repository.PolicyRepository;
 import com.minesunny.permission.core.repository.RoleRepository;
+import com.minesunny.permission.core.repository.UserRepository;
 import com.minesunny.permission.core.util.NaturalKeys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,8 +34,10 @@ import static com.minesunny.permission.core.type.MapTableConstants.*;
 @Slf4j
 public class AdminMgrImpl implements AdminMgr {
     private final ActorRepository actorRepository;
+    private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
+    private final PolicyRepository policyRepository;
     private final MapMgr mapMgr;
 
     // -------------------------------------------------------------------------
@@ -185,7 +190,23 @@ public class AdminMgrImpl implements AdminMgr {
             throw new ValidationException("[addPermission]:    The RBAC permission entity [permName: %s ] already exists"
                     .formatted(permission.getPermName()));
         }
-        return permissionRepository.saveAndFlush(permission);
+        Permission storePermission = permissionRepository.saveAndFlush(permission);
+        if (permission.getPolicy() != null) {
+            Policy policy = permission.getPolicy();
+            if (policy.getId() == null) {
+                policy = policyRepository.saveAndFlush(policy);
+                permission.setPolicy(policy);
+            }
+            Map<String, List<Long>> map = new HashMap<>();
+            map.put("permission_id", List.of(storePermission.getId()));
+            map.put("policy_id", List.of(policy.getId()));
+            try {
+                mapMgr.save(PERMISSION_POLICY, map);
+            } catch (ServiceException e) {
+                throw rethrow(e);
+            }
+        }
+        return storePermission;
     }
 
     @Override
@@ -213,7 +234,12 @@ public class AdminMgrImpl implements AdminMgr {
         Map<String, List<Long>> map = new HashMap<>();
         map.put("permission_id", List.of(storePermission.getId()));
         try {
-            mapMgr.delete(ROLE_PERMISSION, map);
+            if (mapMgr.exist(ROLE_PERMISSION, map)) {
+                mapMgr.delete(ROLE_PERMISSION, map);
+            }
+            if (mapMgr.exist(PERMISSION_POLICY, map)) {
+                mapMgr.delete(PERMISSION_POLICY, map);
+            }
         } catch (ServiceException e) {
             throw rethrow(e);
         }
@@ -250,6 +276,80 @@ public class AdminMgrImpl implements AdminMgr {
                         .formatted(ids.permissionId(), ids.roleId()));
             }
             mapMgr.delete(ROLE_PERMISSION, map);
+        } catch (ServiceException e) {
+            throw rethrow(e);
+        }
+    }
+
+    @Override
+    public void addPermissionPolicy(@NotNull String username, @NotNull String permName, @NotNull Policy policy) throws RBACException {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ValidationException(
+                        "[addPermissionPolicy]: The RBAC user entity [username: %s] does not exist".formatted(username)));
+        Permission permission = permissionRepository.findByPermName(permName)
+                .orElseThrow(() -> new ValidationException(
+                        "[addPermissionPolicy]: The RBAC permission entity [permName: %s] does not exist".formatted(permName)));
+
+        Policy savedPolicy = policy.getId() == null ? policyRepository.saveAndFlush(policy) : policy;
+
+        Map<String, List<Long>> checkMap = new HashMap<>();
+        checkMap.put("permission_id", List.of(permission.getId()));
+        checkMap.put("user_id", List.of(user.getId()));
+
+        try {
+            if (mapMgr.exist(PERMISSION_POLICY, checkMap)) {
+                throw new ValidationException("[addPermissionPolicy]: Policy mapping for permission [permName: %s] and user [username: %s] already exists"
+                        .formatted(permName, username));
+            }
+            Map<String, List<Long>> map = new HashMap<>(checkMap);
+            map.put("policy_id", List.of(savedPolicy.getId()));
+            mapMgr.save(PERMISSION_POLICY, map);
+        } catch (ServiceException e) {
+            throw rethrow(e);
+        }
+    }
+
+    @Override
+    public void updatePermissionPolicy(@NotNull String username, @NotNull String permName, @NotNull Policy policy) throws RBACException {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ValidationException(
+                        "[updatePermissionPolicy]: The RBAC user entity [username: %s] does not exist".formatted(username)));
+        Permission permission = permissionRepository.findByPermName(permName)
+                .orElseThrow(() -> new ValidationException(
+                        "[updatePermissionPolicy]: The RBAC permission entity [permName: %s] does not exist".formatted(permName)));
+
+        Policy savedPolicy = policy.getId() == null ? policyRepository.saveAndFlush(policy) : policy;
+
+        Map<String, List<Long>> keyMap = new HashMap<>();
+        keyMap.put("permission_id", List.of(permission.getId()));
+        keyMap.put("user_id", List.of(user.getId()));
+
+        try {
+            mapMgr.delete(PERMISSION_POLICY, keyMap);
+
+            Map<String, List<Long>> map = new HashMap<>(keyMap);
+            map.put("policy_id", List.of(savedPolicy.getId()));
+            mapMgr.save(PERMISSION_POLICY, map);
+        } catch (ServiceException e) {
+            throw rethrow(e);
+        }
+    }
+
+    @Override
+    public void deletePermissionPolicy(@NotNull String username, @NotNull String permName) throws RBACException {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ValidationException(
+                        "[deletePermissionPolicy]: The RBAC user entity [username: %s] does not exist".formatted(username)));
+        Permission permission = permissionRepository.findByPermName(permName)
+                .orElseThrow(() -> new ValidationException(
+                        "[deletePermissionPolicy]: The RBAC permission entity [permName: %s] does not exist".formatted(permName)));
+
+        Map<String, List<Long>> keyMap = new HashMap<>();
+        keyMap.put("permission_id", List.of(permission.getId()));
+        keyMap.put("user_id", List.of(user.getId()));
+
+        try {
+            mapMgr.delete(PERMISSION_POLICY, keyMap);
         } catch (ServiceException e) {
             throw rethrow(e);
         }

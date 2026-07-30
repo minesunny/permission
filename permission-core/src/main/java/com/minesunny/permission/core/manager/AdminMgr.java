@@ -21,6 +21,7 @@ package com.minesunny.permission.core.manager;
 import com.minesunny.permission.core.entity.Role;
 import com.minesunny.permission.core.entity.actor.Actor;
 import com.minesunny.permission.core.entity.perm.Permission;
+import com.minesunny.permission.core.entity.perm.Policy;
 import com.minesunny.permission.core.exception.RBACException;
 import jakarta.transaction.Transactional;
 import org.jetbrains.annotations.NotNull;
@@ -105,5 +106,11 @@ public interface AdminMgr {
      * This command revokes a permission from a role.
      */
     void revokePermission(@NotNull Permission permission, @NotNull Role role) throws RBACException;
+
+    void addPermissionPolicy(@NotNull String username, @NotNull String permName, @NotNull Policy policy) throws RBACException;
+
+    void updatePermissionPolicy(@NotNull String username, @NotNull String permName, @NotNull Policy policy) throws RBACException;
+
+    void deletePermissionPolicy(@NotNull String username, @NotNull String permName) throws RBACException;
 
 }
