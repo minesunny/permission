@@ -35,7 +35,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
     implementation("org.apache.commons:commons-text:${property("commonsTextVersion")}")
-    implementation("org.apache.directory.fortress:fortress-core:${property("fortressCoreVersion")}")
 
     compileOnly("com.minesunny.jpa:base-jpa:${property("baseJpaVersion")}")
     compileOnly("org.jetbrains:annotations:${property("jetbrainsAnnotationsVersion")}")

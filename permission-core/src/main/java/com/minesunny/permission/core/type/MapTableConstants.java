@@ -29,4 +29,6 @@ public interface MapTableConstants {
     String POST_USER = "t_post_user_map";
 
     String PERMISSION_POLICY = "t_permission_policy_map";
+
+    String MANAGED_ROLE_ACTOR = "t_managed_role_actor_map";
 }

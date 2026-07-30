@@ -28,7 +28,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import org.hibernate.annotations.*;
+import org.hibernate.annotations.Comment;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.Calendar;
 import java.util.Objects;
@@ -42,8 +46,8 @@ import java.util.Set;
 @Table(name = "t_role")
 @Getter
 @Setter
-@SQLDelete(sql = "update t_role set delete_at = current_timestamp, version = ?2 where id in (?1) and delete_at is null")
-@Where(clause = "delete_at is null")
+@SQLDelete(sql = "update t_role set delete_at = current_timestamp where id = ? and version = ? and delete_at is null")
+@SQLRestriction("delete_at is null")
 public class Role extends CachedIdEntity {
 
     @Column(name = "role_name", unique = true, nullable = false)
@@ -66,6 +70,10 @@ public class Role extends CachedIdEntity {
             inverseJoinColumns = @JoinColumn(name = "actor_id", referencedColumnName = "id"))
     @Fetch(FetchMode.SELECT)
     private Set<Actor> actors;
+
+    @ManyToMany(mappedBy = "managedRoles", targetEntity = Actor.class)
+    @Fetch(FetchMode.SELECT)
+    private Set<Actor> managedActors;
 
     @Comment(value = "perms  relate to this role")
     @ManyToMany

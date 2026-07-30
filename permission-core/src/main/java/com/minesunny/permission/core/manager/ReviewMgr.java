@@ -92,4 +92,50 @@ public interface ReviewMgr {
     @NotNull List<Role> permissionRoles(@NotNull Permission permission) throws RBACException;
 
     @NotNull List<Actor> permissionActors(@NotNull Permission permission) throws RBACException;
+
+    /**
+     * Checks whether an actor is assigned to a specific role.
+     */
+    boolean hasRole(@NotNull Actor actor, @NotNull Role role) throws RBACException;
+
+    /**
+     * Checks whether an actor possesses a specific permission (via any assigned role).
+     */
+    boolean hasPermission(@NotNull Actor actor, @NotNull Permission permission) throws RBACException;
+
+    /**
+     * Returns the list of roles managed by a given actor.
+     */
+    @NotNull List<Role> managedRoles(@NotNull Actor actor) throws RBACException;
+
+    /**
+     * Returns the aggregated list of permissions associated with roles managed by a given actor.
+     */
+    @NotNull List<Permission> managedPermissions(@NotNull Actor actor) throws RBACException;
+
+    /**
+     * Checks whether an actor has management authority over a specific role.
+     */
+    boolean hasManagedRole(@NotNull Actor actor, @NotNull Role role) throws RBACException;
+
+    /**
+     * Checks whether an actor has management authority over any role carrying a given permission.
+     */
+    boolean hasManagedPermission(@NotNull Actor actor, @NotNull Permission permission) throws RBACException;
+
+    /**
+     * @deprecated Use {@link #hasManagedRole(Actor, Role)} instead.
+     */
+    @Deprecated
+    default boolean hasManageRole(@NotNull Actor actor, @NotNull Role role) throws RBACException {
+        return hasManagedRole(actor, role);
+    }
+
+    /**
+     * @deprecated Use {@link #hasManagedPermission(Actor, Permission)} instead.
+     */
+    @Deprecated
+    default boolean hasManagePermission(@NotNull Actor actor, @NotNull Permission permission) throws RBACException {
+        return hasManagedPermission(actor, permission);
+    }
 }

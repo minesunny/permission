@@ -27,7 +27,7 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.Date;
 
@@ -35,8 +35,8 @@ import java.util.Date;
 @AllArgsConstructor
 @Entity
 @Table(name = "t_auth_pwd")
-@SQLDelete(sql = "update t_auth_pwd set delete_at = current_timestamp,version = ?2 where id in (?1) and delete_at is null")
-@Where(clause = "delete_at is null")
+@SQLDelete(sql = "update t_auth_pwd set delete_at = current_timestamp where id = ? and version = ? and delete_at is null")
+@SQLRestriction("delete_at is null")
 @Getter
 @Setter
 @SuperBuilder

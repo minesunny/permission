@@ -9,6 +9,7 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @SuperBuilder
@@ -19,7 +20,8 @@ import org.hibernate.annotations.SQLDelete;
 @Table(name = "t_policy")
 @Setter
 @Getter
-@SQLDelete(sql = "update t_policy set delete_at = current_timestamp, version = ?2 where id in (?1) and delete_at is null")
+@SQLDelete(sql = "update t_policy set delete_at = current_timestamp where id = ? and version = ? and delete_at is null")
+@SQLRestriction("delete_at is null")
 public class Policy extends CachedIdEntity {
 
     @Column(name = "policy_name", nullable = false)

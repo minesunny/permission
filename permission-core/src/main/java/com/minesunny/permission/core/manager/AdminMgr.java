@@ -89,6 +89,16 @@ public interface AdminMgr {
      */
     void deassignActor(@NotNull Actor actor, @NotNull Role role) throws RBACException;
 
+    /**
+     * Assigns management/administration authority of a role to an actor.
+     */
+    void assignManagedRole(@NotNull Actor actor, @NotNull Role role) throws RBACException;
+
+    /**
+     * Removes management/administration authority of a role from an actor.
+     */
+    void deassignManagedRole(@NotNull Actor actor, @NotNull Role role) throws RBACException;
+
     @NotNull
     Permission addPermission(@NotNull Permission permission) throws RBACException;
 

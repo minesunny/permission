@@ -184,6 +184,23 @@ class AdminMgrImplTest {
                 () -> adminMgr.deassignActor(user, role));
     }
 
+    @Test
+    @Commit
+    void testAssignAndDeassignManagedRole() throws RBACException {
+        Assertions.assertThrows(ValidationException.class,
+                () -> adminMgr.assignManagedRole(RBACEntityConstants.NOT_EXIST_USER, RBACEntityConstants.NOT_EXIST_ROLE));
+
+        User user = adminMgr.addActor(
+                User.builder().actorName("adm-managedRoleActor").username("adm-managedRoleActor").build());
+        Role role = adminMgr.addRole(Role.builder().roleName("adm-managedRoleTarget").build());
+
+        Assertions.assertDoesNotThrow(() -> adminMgr.assignManagedRole(user, role));
+        Assertions.assertThrows(ValidationException.class, () -> adminMgr.assignManagedRole(user, role));
+
+        Assertions.assertDoesNotThrow(() -> adminMgr.deassignManagedRole(user, role));
+        Assertions.assertThrows(ValidationException.class, () -> adminMgr.deassignManagedRole(user, role));
+    }
+
     // ------------------------------------------------------------------
     // Permission CRUD + grant/revoke
     // ------------------------------------------------------------------

@@ -29,7 +29,7 @@ import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.Set;
 
@@ -46,8 +46,8 @@ import java.util.Set;
 @DiscriminatorColumn(name = "actor_type")
 @Table(name = "t_actor")
 @Comment("权限系统参与者(用户/岗位/组织)基类")
-@SQLDelete(sql = "update t_actor set delete_at = current_timestamp, version = ?2 where id in (?1) and delete_at is null")
-@Where(clause = "delete_at is null")
+@SQLDelete(sql = "update t_actor set delete_at = current_timestamp where id = ? and version = ? and delete_at is null")
+@SQLRestriction("delete_at is null")
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -62,5 +62,13 @@ public  class Actor extends CachedIdEntity {
     @ManyToMany(mappedBy = "actors", targetEntity = Role.class)
     @Fetch(FetchMode.SELECT)
     private Set<Role> roles;
+
+    @ManyToMany
+    @Comment("Roles that this actor has authority to manage and assign")
+    @JoinTable(name = com.minesunny.permission.core.type.MapTableConstants.MANAGED_ROLE_ACTOR,
+            joinColumns = @JoinColumn(name = "actor_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
+    @Fetch(FetchMode.SELECT)
+    private Set<Role> managedRoles;
 
 }

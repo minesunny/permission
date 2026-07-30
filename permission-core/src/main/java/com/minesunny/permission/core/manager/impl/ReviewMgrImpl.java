@@ -286,6 +286,101 @@ public class ReviewMgrImpl implements ReviewMgr {
         }
     }
 
+    // -------------------------------------------------------------------------
+    // Managed roles & authorization checks
+    // -------------------------------------------------------------------------
+
+    @Override
+    public @NotNull List<Role> managedRoles(@NotNull Actor actor) throws RBACException {
+        Optional<Actor> optionalActor;
+        if (Objects.nonNull(actor.getId())) {
+            optionalActor = actorRepository.findById(actor.getId());
+        } else if (StringUtils.hasText(actor.getActorName())) {
+            optionalActor = actorRepository.findByActorName(actor.getActorName());
+        } else {
+            return Collections.emptyList();
+        }
+        if (optionalActor.isPresent()) {
+            Set<Role> roles = optionalActor.get().getManagedRoles();
+            if (Objects.isNull(roles) || roles.isEmpty()) {
+                return Collections.emptyList();
+            }
+            List<Role> roleList = List.copyOf(roles);
+            String policyOwnerName = (actor instanceof User user) ? user.getUsername() : null;
+            for (Role role : roleList) {
+                if (Objects.nonNull(role.getPermissions())) {
+                    for (Permission perm : role.getPermissions()) {
+                        if (Objects.nonNull(policyOwnerName)) {
+                            perm.setPolicyOwnerName(policyOwnerName);
+                        }
+                        populatePolicy(perm);
+                    }
+                }
+            }
+            return roleList;
+        }
+        return Collections.emptyList();
+    }
+
+    @Override
+    public boolean hasRole(@NotNull Actor actor, @NotNull Role role) throws RBACException {
+        ReviewMgr reviewMgr = (ReviewMgr) AopContext.currentProxy();
+        List<Role> roles = reviewMgr.assignedRoles(actor);
+        if (roles.isEmpty()) {
+            return false;
+        }
+        NaturalKeys.requireRoleName(role);
+        return roles.stream().anyMatch(r -> role.getRoleName().equals(r.getRoleName()));
+    }
+
+    @Override
+    public boolean hasPermission(@NotNull Actor actor, @NotNull Permission permission) throws RBACException {
+        ReviewMgr reviewMgr = (ReviewMgr) AopContext.currentProxy();
+        List<Permission> permissions = reviewMgr.actorPermissions(actor);
+        if (permissions.isEmpty()) {
+            return false;
+        }
+        NaturalKeys.requirePermName(permission);
+        return permissions.stream().anyMatch(p -> permission.getPermName().equals(p.getPermName()));
+    }
+
+    @Override
+    public @NotNull List<Permission> managedPermissions(@NotNull Actor actor) throws RBACException {
+        ReviewMgr reviewMgr = (ReviewMgr) AopContext.currentProxy();
+        List<Role> mRoles = reviewMgr.managedRoles(actor);
+        if (mRoles.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return mRoles.stream()
+                .map(Role::getPermissions)
+                .filter(Objects::nonNull)
+                .flatMap(Set::stream)
+                .distinct()
+                .toList();
+    }
+
+    @Override
+    public boolean hasManagedRole(@NotNull Actor actor, @NotNull Role role) throws RBACException {
+        ReviewMgr reviewMgr = (ReviewMgr) AopContext.currentProxy();
+        List<Role> mRoles = reviewMgr.managedRoles(actor);
+        if (mRoles.isEmpty()) {
+            return false;
+        }
+        NaturalKeys.requireRoleName(role);
+        return mRoles.stream().anyMatch(r -> role.getRoleName().equals(r.getRoleName()));
+    }
+
+    @Override
+    public boolean hasManagedPermission(@NotNull Actor actor, @NotNull Permission permission) throws RBACException {
+        ReviewMgr reviewMgr = (ReviewMgr) AopContext.currentProxy();
+        List<Permission> mPerms = reviewMgr.managedPermissions(actor);
+        if (mPerms.isEmpty()) {
+            return false;
+        }
+        NaturalKeys.requirePermName(permission);
+        return mPerms.stream().anyMatch(p -> permission.getPermName().equals(p.getPermName()));
+    }
+
     private RBACException rethrow(ServiceException e) {
         if (e instanceof RBACException rbacException) {
             return rbacException;

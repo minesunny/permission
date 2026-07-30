@@ -215,4 +215,68 @@ class ReviewMgrImplTest {
         assertTrue(roles.contains(role1));
         assertTrue(roles.contains(role2));
     }
+
+    // ------------------------------------------------------------------
+    // hasRole / hasPermission
+    // ------------------------------------------------------------------
+    @Test
+    @Commit
+    void testHasRoleAndHasPermission() throws RBACException {
+        User user = newUser("rev-hasRoleUser");
+        Role role = adminMgr.addRole(Role.builder().roleName("rev-hasRoleTarget").build());
+        Permission perm = adminMgr.addPermission(Permission.builder().permName("rev-hasPermTarget").build());
+        adminMgr.grantPermission(perm, role);
+
+        assertFalse(reviewMgr.hasRole(user, role));
+        assertFalse(reviewMgr.hasPermission(user, perm));
+
+        adminMgr.assignActor(user, role);
+
+        assertTrue(reviewMgr.hasRole(user, role));
+        assertTrue(reviewMgr.hasPermission(user, perm));
+
+        adminMgr.deassignActor(user, role);
+
+        assertFalse(reviewMgr.hasRole(user, role));
+        assertFalse(reviewMgr.hasPermission(user, perm));
+    }
+
+    // ------------------------------------------------------------------
+    // managedRoles / managedPermissions / hasManagedRole / hasManagedPermission
+    // ------------------------------------------------------------------
+    @Test
+    @Commit
+    void testManagedRolesAndHasManagedRoleAndPermission() throws RBACException {
+        User user = newUser("rev-managedRoles-user");
+        Role role = adminMgr.addRole(Role.builder().roleName("rev-managedRole-target").build());
+        Permission perm = adminMgr.addPermission(Permission.builder().permName("rev-managedPerm-target").build());
+        adminMgr.grantPermission(perm, role);
+
+        assertTrue(reviewMgr.managedRoles(user).isEmpty());
+        assertTrue(reviewMgr.managedPermissions(user).isEmpty());
+        assertFalse(reviewMgr.hasManagedRole(user, role));
+        assertFalse(reviewMgr.hasManagedPermission(user, perm));
+
+        adminMgr.assignManagedRole(user, role);
+
+        List<Role> mRoles = reviewMgr.managedRoles(user);
+        assertEquals(1, mRoles.size());
+        assertEquals("rev-managedRole-target", mRoles.get(0).getRoleName());
+
+        List<Permission> mPerms = reviewMgr.managedPermissions(user);
+        assertEquals(1, mPerms.size());
+        assertEquals("rev-managedPerm-target", mPerms.get(0).getPermName());
+
+        assertTrue(reviewMgr.hasManagedRole(user, role));
+        assertTrue(reviewMgr.hasManagedPermission(user, perm));
+        // Backward-compatible deprecated methods
+        assertTrue(reviewMgr.hasManageRole(user, role));
+        assertTrue(reviewMgr.hasManagePermission(user, perm));
+
+        adminMgr.deassignManagedRole(user, role);
+        assertTrue(reviewMgr.managedRoles(user).isEmpty());
+        assertTrue(reviewMgr.managedPermissions(user).isEmpty());
+        assertFalse(reviewMgr.hasManagedRole(user, role));
+        assertFalse(reviewMgr.hasManagedPermission(user, perm));
+    }
 }

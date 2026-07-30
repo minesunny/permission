@@ -179,6 +179,40 @@ public class AdminMgrImpl implements AdminMgr {
         }
     }
 
+    @Override
+    public void assignManagedRole(@NotNull Actor actor, @NotNull Role role) throws RBACException {
+        ActorRoleIds ids = resolveActorRole(actor, role, "assignManagedRole");
+        Map<String, List<Long>> map = new HashMap<>();
+        map.put("actor_id", List.of(ids.actorId()));
+        map.put("role_id", List.of(ids.roleId()));
+        try {
+            if (mapMgr.exist(MANAGED_ROLE_ACTOR, map)) {
+                throw new ValidationException("[assignManagedRole]:    The RBAC managed role[id: %s] entity has assigned to actor[id: %s] entity"
+                        .formatted(ids.roleId(), ids.actorId()));
+            }
+            mapMgr.save(MANAGED_ROLE_ACTOR, map);
+        } catch (ServiceException e) {
+            throw rethrow(e);
+        }
+    }
+
+    @Override
+    public void deassignManagedRole(@NotNull Actor actor, @NotNull Role role) throws RBACException {
+        ActorRoleIds ids = resolveActorRole(actor, role, "deassignManagedRole");
+        Map<String, List<Long>> map = new HashMap<>();
+        map.put("actor_id", List.of(ids.actorId()));
+        map.put("role_id", List.of(ids.roleId()));
+        try {
+            if (!mapMgr.exist(MANAGED_ROLE_ACTOR, map)) {
+                throw new ValidationException("[deassignManagedRole]:    The RBAC managed role[id: %s] entity has deassigned from actor[id: %s] entity"
+                        .formatted(ids.roleId(), ids.actorId()));
+            }
+            mapMgr.delete(MANAGED_ROLE_ACTOR, map);
+        } catch (ServiceException e) {
+            throw rethrow(e);
+        }
+    }
+
     // -------------------------------------------------------------------------
     // Permission CRUD + grant/revoke
     // -------------------------------------------------------------------------
@@ -312,7 +346,9 @@ public class AdminMgrImpl implements AdminMgr {
                             .formatted(permName, username));
         }
 
-        policy.setId(existing.get(0).getId());
+        Policy existingPolicy = existing.get(0);
+        policy.setId(existingPolicy.getId());
+        policy.setVersion(existingPolicy.getVersion());
         policy.setPermName(permName);
         policy.setOwnerName(username);
         policyRepository.saveAndFlush(policy);
