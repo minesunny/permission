@@ -71,5 +71,5 @@ public class Permission extends CachedIdEntity {
     private Policy policy;
 
     @Transient
-    private String policyOwnerId;
+    private String policyOwnerName;
 }

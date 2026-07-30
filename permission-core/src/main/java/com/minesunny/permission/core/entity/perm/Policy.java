@@ -30,13 +30,13 @@ public class Policy extends CachedIdEntity {
     @Comment(value = "description policy")
     private String description;
 
-    @Column(name = "owner_id")
-    @Comment(value = "owner id (username/actorName)")
-    private String ownerId;
+    @Column(name = "owner_name")
+    @Comment(value = "owner name (username/actorName)")
+    private String ownerName;
 
-    @Column(name = "perm_id")
-    @Comment(value = "permission id")
-    private Long permId;
+    @Column(name = "perm_name")
+    @Comment(value = "permission name")
+    private String permName;
 
     @Override
     public int hashCode() {

@@ -41,17 +41,21 @@ public class ReviewMgrImpl implements ReviewMgr {
     private final MapMgr mapMgr;
 
     private void populatePolicy(Permission permission) {
-        if (permission == null || permission.getId() == null) {
+        if (permission == null || !StringUtils.hasText(permission.getPermName())) {
             return;
         }
         Policy policy = null;
-        if (StringUtils.hasText(permission.getPolicyOwnerId())) {
-            policy = policyRepository.findByPermIdAndOwnerId(permission.getId(), permission.getPolicyOwnerId())
-                    .orElse(null);
+        if (StringUtils.hasText(permission.getPolicyOwnerName())) {
+            List<Policy> userPolicies = policyRepository.findByPermNameAndOwnerName(permission.getPermName(), permission.getPolicyOwnerName());
+            if (!userPolicies.isEmpty()) {
+                policy = userPolicies.get(0);
+            }
         }
         if (policy == null) {
-            policy = policyRepository.findByPermIdAndOwnerIdNull(permission.getId())
-                    .orElse(null);
+            List<Policy> templatePolicies = policyRepository.findByPermNameAndOwnerNameNull(permission.getPermName());
+            if (!templatePolicies.isEmpty()) {
+                policy = templatePolicies.get(0);
+            }
         }
         if (policy != null) {
             permission.setPolicy(policy);
@@ -105,7 +109,7 @@ public class ReviewMgrImpl implements ReviewMgr {
         NaturalKeys.requirePermName(permission);
         Optional<Permission> permOpt = permissionRepository.findByPermName(permission.getPermName());
         permOpt.ifPresent(p -> {
-            p.setPolicyOwnerId(permission.getPolicyOwnerId());
+            p.setPolicyOwnerName(permission.getPolicyOwnerName());
             populatePolicy(p);
         });
         return permOpt;
@@ -119,7 +123,7 @@ public class ReviewMgrImpl implements ReviewMgr {
         }
         List<Permission> list = permissionRepository.findAll(search);
         for (Permission p : list) {
-            p.setPolicyOwnerId(permission.getPolicyOwnerId());
+            p.setPolicyOwnerName(permission.getPolicyOwnerName());
             populatePolicy(p);
         }
         return list;
@@ -164,7 +168,7 @@ public class ReviewMgrImpl implements ReviewMgr {
             }
             Permission permission = new Permission();
             if (actor instanceof User user) {
-                permission.setPolicyOwnerId(user.getUsername());
+                permission.setPolicyOwnerName(user.getUsername());
             }
             for (Long permissionId : permissionIds) {
                 permission.setId(permissionId);
@@ -234,12 +238,12 @@ public class ReviewMgrImpl implements ReviewMgr {
                 return Collections.emptyList();
             }
             List<Role> roleList = List.copyOf(roles);
-            String policyOwnerId = (actor instanceof User user) ? user.getUsername() : null;
+            String policyOwnerName = (actor instanceof User user) ? user.getUsername() : null;
             for (Role role : roleList) {
                 if (role.getPermissions() != null) {
                     for (Permission perm : role.getPermissions()) {
-                        if (policyOwnerId != null) {
-                            perm.setPolicyOwnerId(policyOwnerId);
+                        if (policyOwnerName != null) {
+                            perm.setPolicyOwnerName(policyOwnerName);
                         }
                         populatePolicy(perm);
                     }
