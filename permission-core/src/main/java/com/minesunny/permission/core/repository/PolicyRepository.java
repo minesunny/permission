@@ -6,14 +6,17 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface PolicyRepository extends JpaRepository<Policy, Long>, JpaSpecificationExecutor<Policy> {
-    Optional<Policy> findByPolicyName(String policyName);
+    List<Policy> findByPolicyName(String policyName);
 
-    @Query(value = "select policy_id from t_permission_policy_map where permission_id = :permId and user_id = :userId", nativeQuery = true)
-    Optional<Long> findPolicyIdByPermissionIdAndUserId(@Param("permId") Long permId, @Param("userId") Long userId);
+    Optional<Policy> findByPolicyNameAndOwnerIdNull(String policyName);
 
-    @Query(value = "select policy_id from t_permission_policy_map where permission_id = :permId and user_id is null", nativeQuery = true)
-    Optional<Long> findTemplatePolicyIdByPermissionId(@Param("permId") Long permId);
+    Optional<Policy> findByPolicyNameAndOwnerId(String policyName, String ownerId);
+
+    Optional<Policy> findByPermIdAndOwnerId(Long permId, String ownerId);
+
+    Optional<Policy> findByPermIdAndOwnerIdNull(Long permId);
 }

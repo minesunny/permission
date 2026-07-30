@@ -8,6 +8,7 @@ import com.minesunny.permission.core.entity.Session;
 import com.minesunny.permission.core.entity.actor.Actor;
 import com.minesunny.permission.core.entity.actor.User;
 import com.minesunny.permission.core.entity.perm.Permission;
+import com.minesunny.permission.core.entity.perm.Policy;
 import com.minesunny.permission.core.exception.RBACException;
 import com.minesunny.permission.core.exception.ValidationException;
 import com.minesunny.permission.core.manager.ReviewMgr;
@@ -43,20 +44,17 @@ public class ReviewMgrImpl implements ReviewMgr {
         if (permission == null || permission.getId() == null) {
             return;
         }
-        Long policyId = null;
+        Policy policy = null;
         if (StringUtils.hasText(permission.getPolicyOwnerId())) {
-            Optional<User> userOpt = userRepository.findByUsername(permission.getPolicyOwnerId());
-            if (userOpt.isPresent()) {
-                policyId = policyRepository.findPolicyIdByPermissionIdAndUserId(permission.getId(), userOpt.get().getId())
-                        .orElse(null);
-            }
-        }
-        if (policyId == null) {
-            policyId = policyRepository.findTemplatePolicyIdByPermissionId(permission.getId())
+            policy = policyRepository.findByPermIdAndOwnerId(permission.getId(), permission.getPolicyOwnerId())
                     .orElse(null);
         }
-        if (policyId != null) {
-            policyRepository.findById(policyId).ifPresent(permission::setPolicy);
+        if (policy == null) {
+            policy = policyRepository.findByPermIdAndOwnerIdNull(permission.getId())
+                    .orElse(null);
+        }
+        if (policy != null) {
+            permission.setPolicy(policy);
         }
     }
 

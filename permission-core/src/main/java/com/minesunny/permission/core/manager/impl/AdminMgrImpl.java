@@ -193,6 +193,7 @@ public class AdminMgrImpl implements AdminMgr {
         Permission storePermission = permissionRepository.saveAndFlush(permission);
         if (permission.getPolicy() != null) {
             Policy policy = permission.getPolicy();
+            policy.setPermId(storePermission.getId());
             if (policy.getId() == null) {
                 policy = policyRepository.saveAndFlush(policy);
                 permission.setPolicy(policy);
@@ -290,7 +291,9 @@ public class AdminMgrImpl implements AdminMgr {
                 .orElseThrow(() -> new ValidationException(
                         "[addPermissionPolicy]: The RBAC permission entity [permName: %s] does not exist".formatted(permName)));
 
-        Policy savedPolicy = policy.getId() == null ? policyRepository.saveAndFlush(policy) : policy;
+        policy.setPermId(permission.getId());
+        policy.setOwnerId(username);
+        Policy savedPolicy = policy.getId() == null ? policyRepository.saveAndFlush(policy) : policyRepository.save(policy);
 
         Map<String, List<Long>> checkMap = new HashMap<>();
         checkMap.put("permission_id", List.of(permission.getId()));
@@ -318,7 +321,9 @@ public class AdminMgrImpl implements AdminMgr {
                 .orElseThrow(() -> new ValidationException(
                         "[updatePermissionPolicy]: The RBAC permission entity [permName: %s] does not exist".formatted(permName)));
 
-        Policy savedPolicy = policy.getId() == null ? policyRepository.saveAndFlush(policy) : policy;
+        policy.setPermId(permission.getId());
+        policy.setOwnerId(username);
+        Policy savedPolicy = policy.getId() == null ? policyRepository.saveAndFlush(policy) : policyRepository.save(policy);
 
         Map<String, List<Long>> keyMap = new HashMap<>();
         keyMap.put("permission_id", List.of(permission.getId()));
