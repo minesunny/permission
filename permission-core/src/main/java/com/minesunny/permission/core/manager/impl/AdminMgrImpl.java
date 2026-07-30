@@ -62,7 +62,7 @@ public class AdminMgrImpl implements AdminMgr {
                 .orElseThrow(() -> new ValidationException(
                         "[updateActor]:  The RBAC actor entity [actorName: %s] does not exist".formatted(actorName)));
         String newActorName = actor.getActorName();
-        if (newActorName != null && !newActorName.equals(actorName)
+        if (Objects.nonNull(newActorName) && !newActorName.equals(actorName)
                 && actorRepository.findByActorName(newActorName).isPresent()) {
             throw new ValidationException("[updateActor]:  The RBAC actor entity [actorName: %s] already exists"
                     .formatted(newActorName));
@@ -121,7 +121,7 @@ public class AdminMgrImpl implements AdminMgr {
                 .orElseThrow(() -> new ValidationException(
                         "[updateRole]:    The RBAC role entity [roleName: %s] does not exist".formatted(roleName)));
         String newRoleName = role.getRoleName();
-        if (newRoleName != null && !newRoleName.equals(roleName)
+        if (Objects.nonNull(newRoleName) && !newRoleName.equals(roleName)
                 && roleRepository.findByRoleName(newRoleName).isPresent()) {
             throw new ValidationException("[updateRole]:    The RBAC role entity [roleName: %s ] already exists"
                     .formatted(newRoleName));
@@ -191,11 +191,11 @@ public class AdminMgrImpl implements AdminMgr {
                     .formatted(permission.getPermName()));
         }
         Permission storePermission = permissionRepository.saveAndFlush(permission);
-        if (permission.getPolicy() != null) {
+        if (Objects.nonNull(permission.getPolicy())) {
             Policy policy = permission.getPolicy();
             policy.setPermName(storePermission.getPermName());
             policy.setOwnerName(null);
-            if (policy.getId() == null) {
+            if (Objects.isNull(policy.getId())) {
                 policy = policyRepository.saveAndFlush(policy);
                 permission.setPolicy(policy);
             }
@@ -209,7 +209,7 @@ public class AdminMgrImpl implements AdminMgr {
                 .orElseThrow(() -> new ValidationException(
                         "[updatePermission]:    The RBAC permission entity [permName: %s] does not exist".formatted(permName)));
         String newPermName = permission.getPermName();
-        if (newPermName != null && !newPermName.equals(permName)
+        if (Objects.nonNull(newPermName) && !newPermName.equals(permName)
                 && permissionRepository.findByPermName(newPermName).isPresent()) {
             throw new ValidationException("[updatePermission]:    The RBAC permission entity [permName: %s ] already exists"
                     .formatted(newPermName));
@@ -342,7 +342,7 @@ public class AdminMgrImpl implements AdminMgr {
     private record PermissionRoleIds(Long permissionId, Long roleId) {}
 
     private Actor resolveActor(Actor actor, String op) throws RBACException {
-        if (actor.getId() != null) {
+        if (Objects.nonNull(actor.getId())) {
             return actorRepository.findById(actor.getId())
                     .orElseThrow(() -> new ValidationException(
                             "[%s]:  The RBAC actor[id: %s] does not exist".formatted(op, actor.getId())));

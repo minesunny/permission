@@ -41,7 +41,7 @@ public class ReviewMgrImpl implements ReviewMgr {
     private final MapMgr mapMgr;
 
     private void populatePolicy(Permission permission) {
-        if (permission == null || !StringUtils.hasText(permission.getPermName())) {
+        if (Objects.isNull(permission) || !StringUtils.hasText(permission.getPermName())) {
             return;
         }
         Policy policy = null;
@@ -51,13 +51,13 @@ public class ReviewMgrImpl implements ReviewMgr {
                 policy = userPolicies.get(0);
             }
         }
-        if (policy == null) {
+        if (Objects.isNull(policy)) {
             List<Policy> templatePolicies = policyRepository.findByPermNameAndOwnerNameNull(permission.getPermName());
             if (!templatePolicies.isEmpty()) {
                 policy = templatePolicies.get(0);
             }
         }
-        if (policy != null) {
+        if (Objects.nonNull(policy)) {
             permission.setPolicy(policy);
         }
     }
@@ -139,7 +139,7 @@ public class ReviewMgrImpl implements ReviewMgr {
         Optional<Role> optionalRole = reviewMgr.readRole(role);
         if (optionalRole.isPresent()) {
             Set<Permission> permissions = optionalRole.get().getPermissions();
-            if (permissions == null || permissions.isEmpty()) {
+            if (Objects.isNull(permissions) || permissions.isEmpty()) {
                 return Collections.emptyList();
             }
             List<Permission> list = List.copyOf(permissions);
@@ -187,7 +187,7 @@ public class ReviewMgrImpl implements ReviewMgr {
     @Override
     public @NotNull List<Role> sessionRoles(@NotNull Session session) throws RBACException {
         List<Role> roles = session.getRoles();
-        if (roles == null || roles.isEmpty()) {
+        if (Objects.isNull(roles) || roles.isEmpty()) {
             return Collections.emptyList();
         }
         return roles.stream().filter(Role::activated).collect(Collectors.toList());
@@ -214,7 +214,7 @@ public class ReviewMgrImpl implements ReviewMgr {
         Optional<Role> optionalRole = reviewMgr.readRole(role);
         if (optionalRole.isPresent()) {
             Set<Actor> actors = optionalRole.get().getActors();
-            if (actors == null || actors.isEmpty()) {
+            if (Objects.isNull(actors) || actors.isEmpty()) {
                 return Collections.emptyList();
             }
             return List.copyOf(actors);
@@ -225,7 +225,7 @@ public class ReviewMgrImpl implements ReviewMgr {
     @Override
     public @NotNull List<Role> assignedRoles(@NotNull Actor actor) throws RBACException {
         Optional<Actor> optionalActor;
-        if (actor.getId() != null) {
+        if (Objects.nonNull(actor.getId())) {
             optionalActor = actorRepository.findById(actor.getId());
         } else if (StringUtils.hasText(actor.getActorName())) {
             optionalActor = actorRepository.findByActorName(actor.getActorName());
@@ -234,15 +234,15 @@ public class ReviewMgrImpl implements ReviewMgr {
         }
         if (optionalActor.isPresent()) {
             Set<Role> roles = optionalActor.get().getRoles();
-            if (roles == null || roles.isEmpty()) {
+            if (Objects.isNull(roles) || roles.isEmpty()) {
                 return Collections.emptyList();
             }
             List<Role> roleList = List.copyOf(roles);
             String policyOwnerName = (actor instanceof User user) ? user.getUsername() : null;
             for (Role role : roleList) {
-                if (role.getPermissions() != null) {
+                if (Objects.nonNull(role.getPermissions())) {
                     for (Permission perm : role.getPermissions()) {
-                        if (policyOwnerName != null) {
+                        if (Objects.nonNull(policyOwnerName)) {
                             perm.setPolicyOwnerName(policyOwnerName);
                         }
                         populatePolicy(perm);
@@ -267,7 +267,7 @@ public class ReviewMgrImpl implements ReviewMgr {
                     .formatted(permission.getId()));
         }
         Set<Role> roles = permission.getRoles();
-        if (roles == null || roles.isEmpty()) {
+        if (Objects.isNull(roles) || roles.isEmpty()) {
             return Collections.emptyList();
         }
         return List.copyOf(permission.getRoles());
