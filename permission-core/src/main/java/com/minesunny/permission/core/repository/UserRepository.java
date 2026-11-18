@@ -35,4 +35,6 @@ public interface UserRepository extends JpaRepositoryImplementation<User, Long> 
     @Query("select u from User u where u.id in :ids")
     Page<User> findByIdIn(@Param("ids") @NonNull Collection<Long> ids, Pageable pageable);
 
+    Optional<User> findByUsername(String username);
+
 }

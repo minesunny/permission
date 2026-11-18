@@ -3,21 +3,26 @@ package com.minesunny.permission.core.manager.impl;
 import com.minesunny.jpa.exception.ServiceException;
 import com.minesunny.jpa.manager.MapMgr;
 import com.minesunny.permission.core.entity.Role;
+import com.minesunny.permission.core.entity.actor.Actor;
+import com.minesunny.permission.core.entity.actor.OrgUnit;
+import com.minesunny.permission.core.entity.actor.Post;
 import com.minesunny.permission.core.entity.actor.User;
 import com.minesunny.permission.core.entity.perm.Permission;
-import com.minesunny.permission.core.entity.perm.Resource;
+import com.minesunny.permission.core.entity.perm.Policy;
+import com.minesunny.permission.core.exception.RBACException;
 import com.minesunny.permission.core.exception.ValidationException;
 import com.minesunny.permission.core.manager.AdminMgr;
+import com.minesunny.permission.core.repository.ActorRepository;
 import com.minesunny.permission.core.repository.PermissionRepository;
+import com.minesunny.permission.core.repository.PolicyRepository;
 import com.minesunny.permission.core.repository.RoleRepository;
 import com.minesunny.permission.core.repository.UserRepository;
-import jakarta.transaction.Transactional;
+import com.minesunny.permission.core.util.NaturalKeys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -28,243 +33,387 @@ import static com.minesunny.permission.core.type.MapTableConstants.*;
 @RequiredArgsConstructor
 @Slf4j
 public class AdminMgrImpl implements AdminMgr {
+    private final ActorRepository actorRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
+    private final PolicyRepository policyRepository;
     private final MapMgr mapMgr;
 
-    @Override
-    public @NotNull User addUser(@NotNull User user) throws ServiceException {
+    // -------------------------------------------------------------------------
+    // Actor CRUD
+    // -------------------------------------------------------------------------
 
-        if (Objects.nonNull(user.getId())) {
-            if (userRepository.findById(user.getId()).isPresent()) {
-                throw new ValidationException(("[addUser]:  The RBAC user entity [id: %s ] is already  exist").formatted(user.getId()));
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends Actor> T addActor(@NotNull T actor) throws RBACException {
+        NaturalKeys.requireActorName(actor);
+        if (actorRepository.findByActorName(actor.getActorName()).isPresent()) {
+            throw new ValidationException("[addActor]:  The RBAC actor entity [actorName: %s] already exists"
+                    .formatted(actor.getActorName()));
+        }
+        return (T) actorRepository.saveAndFlush(actor);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends Actor> T updateActor(@NotNull String actorName, @NotNull T actor) throws RBACException {
+        Actor storeActor = actorRepository.findByActorName(actorName)
+                .orElseThrow(() -> new ValidationException(
+                        "[updateActor]:  The RBAC actor entity [actorName: %s] does not exist".formatted(actorName)));
+        String newActorName = actor.getActorName();
+        if (Objects.nonNull(newActorName) && !newActorName.equals(actorName)
+                && actorRepository.findByActorName(newActorName).isPresent()) {
+            throw new ValidationException("[updateActor]:  The RBAC actor entity [actorName: %s] already exists"
+                    .formatted(newActorName));
+        }
+        List<String> excludes = new ArrayList<>(List.of("id", "roles"));
+        if (actor instanceof User) {
+            excludes.addAll(List.of("post", "managerOrgUnits", "orgUnits"));
+        } else if (actor instanceof OrgUnit) {
+            excludes.addAll(List.of("users", "managerUsers"));
+        } else if (actor instanceof Post) {
+            excludes.add("users");
+        }
+        BeanUtils.copyProperties(actor, storeActor, excludes.toArray(new String[0]));
+        return (T) actorRepository.saveAndFlush(storeActor);
+    }
+
+    @Override
+    public void deleteActor(@NotNull Actor actor) throws RBACException {
+        Actor storeActor = resolveActor(actor, "deleteActor");
+        Map<String, List<Long>> actorMap = new HashMap<>();
+        actorMap.put("actor_id", List.of(storeActor.getId()));
+        try {
+            mapMgr.delete(ROLE_ACTOR, actorMap);
+            if (storeActor instanceof User) {
+                Map<String, List<Long>> userMap = new HashMap<>();
+                userMap.put("user_id", List.of(storeActor.getId()));
+                mapMgr.delete(ORG_UNIT_USER, userMap);
+                mapMgr.delete(POST_USER, userMap);
             }
+        } catch (ServiceException e) {
+            throw rethrow(e);
         }
-        User newUser = new User();
-        BeanUtils.copyProperties(user, newUser, "roles", "post", "managerOrgUnits", "orgUnits");
-        return userRepository.saveAndFlush(newUser);
+        actorRepository.delete(storeActor);
+        actorRepository.flush();
     }
 
-    @Override
-    public @NotNull User updateUser(@NotNull User user) throws ServiceException {
-
-        if (Objects.isNull(user.getId())) {
-            throw new ValidationException("[updateUser]:    The RBAC user  entity's id is required and cannot be null");
-        }
-        Optional<User> findUser = userRepository.findById(user.getId());
-        if (findUser.isEmpty()) {
-            throw new ValidationException("[updateUser]:    The RBAC user entity [id: %s] is not exist".formatted(user.getId()));
-        }
-
-        User storeUser = findUser.get();
-        BeanUtils.copyProperties(user, storeUser, "id", "roles", "depts", "post");
-        return userRepository.saveAndFlush(storeUser);
-    }
+    // -------------------------------------------------------------------------
+    // Role CRUD
+    // -------------------------------------------------------------------------
 
     @Override
-    @Transactional
-    public void deleteUser(@NotNull User user) throws ServiceException {
-        if (Objects.isNull(user.getId())) {
-            throw new ValidationException("[deleteUser]:    The RBAC user entity's id is required and cannot be null");
-        }
-        Map<String, List<Long>> map = new HashMap<>();
-        map.put("user_id", List.of(user.getId()));
-        mapMgr.delete(ORG_UNIT_USER, map);
-        mapMgr.delete(ROLE_USER, map);
-        mapMgr.delete(POST_USR, map);
-        userRepository.delete(user);
-    }
-
-    @Override
-    public @NotNull Role addRole(@NotNull Role role) throws ServiceException {
-
-        if (Objects.nonNull(role.getId())) {
-            if (roleRepository.findById(role.getId()).isPresent()) {
-                throw new ValidationException(("[addRole]:    The RBAC role entity [id: %s ] is already exist").formatted(role.getId()));
-            }
+    public @NotNull Role addRole(@NotNull Role role) throws RBACException {
+        NaturalKeys.requireRoleName(role);
+        if (roleRepository.findByRoleName(role.getRoleName()).isPresent()) {
+            throw new ValidationException("[addRole]:    The RBAC role entity [roleName: %s ] already exists"
+                    .formatted(role.getRoleName()));
         }
         Role newRole = new Role();
-        BeanUtils.copyProperties(role, newRole, "permissions", "users");
-        return roleRepository.saveAndFlush(role);
+        BeanUtils.copyProperties(role, newRole, "permissions", "actors");
+        return roleRepository.saveAndFlush(newRole);
     }
 
     @Override
-    public @NotNull Role updateRole(@NotNull Role role) throws ServiceException {
-
-        if (Objects.isNull(role.getId())) {
-            throw new ValidationException("[updateRole]:    The RBAC role  entity's id is required and cannot be null");
+    public @NotNull Role updateRole(@NotNull String roleName, @NotNull Role role) throws RBACException {
+        Role storeRole = roleRepository.findByRoleName(roleName)
+                .orElseThrow(() -> new ValidationException(
+                        "[updateRole]:    The RBAC role entity [roleName: %s] does not exist".formatted(roleName)));
+        String newRoleName = role.getRoleName();
+        if (Objects.nonNull(newRoleName) && !newRoleName.equals(roleName)
+                && roleRepository.findByRoleName(newRoleName).isPresent()) {
+            throw new ValidationException("[updateRole]:    The RBAC role entity [roleName: %s ] already exists"
+                    .formatted(newRoleName));
         }
-        Optional<Role> findRole = roleRepository.findById(role.getId());
-        if (findRole.isEmpty()) {
-            throw new ValidationException("[updateRole]:    The RBAC role entity [id: %s] is not exist".formatted(role.getId()));
-        }
-        Role storeRole = findRole.get();
-        BeanUtils.copyProperties(role, storeRole, "id", "users", "permissions");
+        BeanUtils.copyProperties(role, storeRole, "id", "actors", "permissions");
         return roleRepository.saveAndFlush(storeRole);
     }
 
     @Override
-    @Transactional
-    public void deleteRole(@NotNull Role role) throws ServiceException {
-        if (Objects.isNull(role.getId())) {
-            throw new ValidationException("[deleteRole]:    The RBAC role entity's id is required and cannot be null");
-        }
-        Long roleId = role.getId();
-        roleRepository.deleteById(roleId);
+    public void deleteRole(@NotNull Role role) throws RBACException {
+        NaturalKeys.requireRoleName(role);
+        Role storeRole = roleRepository.findByRoleName(role.getRoleName())
+                .orElseThrow(() -> new ValidationException(
+                        "[deleteRole]:    The RBAC role entity [roleName: %s] does not exist"
+                                .formatted(role.getRoleName())));
+        roleRepository.delete(storeRole);
+        roleRepository.flush();
     }
 
+    // -------------------------------------------------------------------------
+    // Actor-Role assignment
+    // -------------------------------------------------------------------------
+
     @Override
-    public void assignUser(@NotNull User user, @NotNull Role role) throws ServiceException {
-        if (Objects.isNull(user.getId())) {
-            throw new ValidationException("[assignUser]:    The RBAC user entity's id is required and cannot null");
-        }
-        if (Objects.isNull(role.getId())) {
-            throw new ValidationException("[assignUser]:    The RBAC role entity's id is required and cannot null");
-        }
-        Long userId = user.getId();
-        Long roleId = role.getId();
-        if (!userRepository.existsById(userId)) {
-            throw new ValidationException("[assignUser]:    The RBAC user[id: %s] entity is not exist".formatted(userId));
-        }
-        if (!roleRepository.existsById(roleId)) {
-            throw new ValidationException("[assignUser]:    The RBAC role[id: %s] entity is required and cannot null".formatted(roleId));
-        }
+    public void assignActor(@NotNull Actor actor, @NotNull Role role) throws RBACException {
+        ActorRoleIds ids = resolveActorRole(actor, role, "assignActor");
         Map<String, List<Long>> map = new HashMap<>();
-        map.put("user_id", List.of(user.getId()));
-        map.put("role_id", List.of(role.getId()));
-        if (mapMgr.exist(ROLE_USER, map)) {
-            throw new ValidationException(String.format("[assignUser]:    The RBAC role[id: %s] entity has assigned " +
-                    "to user[id: %s]entity", roleId, userId));
+        map.put("actor_id", List.of(ids.actorId()));
+        map.put("role_id", List.of(ids.roleId()));
+        try {
+            if (mapMgr.exist(ROLE_ACTOR, map)) {
+                throw new ValidationException("[assignActor]:    The RBAC role[id: %s] entity has assigned to actor[id: %s] entity"
+                        .formatted(ids.roleId(), ids.actorId()));
+            }
+            mapMgr.save(ROLE_ACTOR, map);
+        } catch (ServiceException e) {
+            throw rethrow(e);
         }
-        mapMgr.save(ROLE_USER, map);
     }
 
     @Override
-    public void deassignUser(@NotNull User user, @NotNull Role role) throws ServiceException {
-        if (Objects.isNull(user.getId())) {
-            throw new ValidationException("[deassignUser]:    The RBAC user entity's id is required and cannot null");
-        }
-        if (Objects.isNull(role.getId())) {
-            throw new ValidationException("[deassignUser]:    The RBAC role entity's id is required and cannot null");
-        }
-        Long userId = user.getId();
-        Long roleId = role.getId();
-        if (!userRepository.existsById(userId)) {
-            throw new ValidationException(String.format("[deassignUser]:    The RBAC user[id: %s] entity is not exist", userId));
-        }
-        if (!roleRepository.existsById(roleId)) {
-            throw new ValidationException(String.format("[deassignUser]:    The RBAC role[id: %s] entity is not exist", roleId));
-        }
+    public void deassignActor(@NotNull Actor actor, @NotNull Role role) throws RBACException {
+        ActorRoleIds ids = resolveActorRole(actor, role, "deassignActor");
         Map<String, List<Long>> map = new HashMap<>();
-        map.put("user_id", List.of(user.getId()));
-        map.put("role_id", List.of(role.getId()));
-        if (!mapMgr.exist(ROLE_USER, map)) {
-            throw new ValidationException("[deassignUser]:    The RBAC role[id: %s] entity has designed from user[id: %s] entity".formatted(roleId, userId));
+        map.put("actor_id", List.of(ids.actorId()));
+        map.put("role_id", List.of(ids.roleId()));
+        try {
+            if (!mapMgr.exist(ROLE_ACTOR, map)) {
+                throw new ValidationException("[deassignActor]:    The RBAC role[id: %s] entity has deassigned from actor[id: %s] entity"
+                        .formatted(ids.roleId(), ids.actorId()));
+            }
+            mapMgr.delete(ROLE_ACTOR, map);
+        } catch (ServiceException e) {
+            throw rethrow(e);
         }
-        mapMgr.delete(ROLE_USER, map);
     }
 
     @Override
-    public @NotNull Permission addPermission(@NotNull Permission permission) throws ServiceException {
-        if (Objects.nonNull(permission.getId())) {
-            if (permissionRepository.findById(permission.getId()).isPresent()) {
-                throw new ValidationException(("[addPermission]:    The RBAC permission entity [id: %s ] is already exist").formatted(permission.getId()));
+    public void assignManagedRole(@NotNull Actor actor, @NotNull Role role) throws RBACException {
+        ActorRoleIds ids = resolveActorRole(actor, role, "assignManagedRole");
+        Map<String, List<Long>> map = new HashMap<>();
+        map.put("actor_id", List.of(ids.actorId()));
+        map.put("role_id", List.of(ids.roleId()));
+        try {
+            if (mapMgr.exist(MANAGED_ROLE_ACTOR, map)) {
+                throw new ValidationException("[assignManagedRole]:    The RBAC managed role[id: %s] entity has assigned to actor[id: %s] entity"
+                        .formatted(ids.roleId(), ids.actorId()));
+            }
+            mapMgr.save(MANAGED_ROLE_ACTOR, map);
+        } catch (ServiceException e) {
+            throw rethrow(e);
+        }
+    }
+
+    @Override
+    public void deassignManagedRole(@NotNull Actor actor, @NotNull Role role) throws RBACException {
+        ActorRoleIds ids = resolveActorRole(actor, role, "deassignManagedRole");
+        Map<String, List<Long>> map = new HashMap<>();
+        map.put("actor_id", List.of(ids.actorId()));
+        map.put("role_id", List.of(ids.roleId()));
+        try {
+            if (!mapMgr.exist(MANAGED_ROLE_ACTOR, map)) {
+                throw new ValidationException("[deassignManagedRole]:    The RBAC managed role[id: %s] entity has deassigned from actor[id: %s] entity"
+                        .formatted(ids.roleId(), ids.actorId()));
+            }
+            mapMgr.delete(MANAGED_ROLE_ACTOR, map);
+        } catch (ServiceException e) {
+            throw rethrow(e);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Permission CRUD + grant/revoke
+    // -------------------------------------------------------------------------
+
+    @Override
+    public @NotNull Permission addPermission(@NotNull Permission permission) throws RBACException {
+        NaturalKeys.requirePermName(permission);
+        if (permissionRepository.findByPermName(permission.getPermName()).isPresent()) {
+            throw new ValidationException("[addPermission]:    The RBAC permission entity [permName: %s ] already exists"
+                    .formatted(permission.getPermName()));
+        }
+        Permission storePermission = permissionRepository.saveAndFlush(permission);
+        if (Objects.nonNull(permission.getPolicy())) {
+            Policy policy = permission.getPolicy();
+            policy.setPermName(storePermission.getPermName());
+            policy.setOwnerName(null);
+            if (Objects.isNull(policy.getId())) {
+                policy = policyRepository.saveAndFlush(policy);
+                permission.setPolicy(policy);
             }
         }
-        Set<Resource> resources = permission.getResources();
-        if (Objects.nonNull(resources) && !resources.isEmpty()) {
-            Set<String> resourceName = resources.stream().map(resource -> resource.getClass().getSimpleName()).collect(Collectors.toSet());
-            if (resourceName.size() > 1) {
-                throw new ValidationException(String.format("[addPermission]: The RBAC permission entity must has " +
-                        "same resource [resource: %s] type set", Arrays.toString(StringUtils.toStringArray(resourceName))));
+        return storePermission;
+    }
+
+    @Override
+    public @NotNull Permission updatePermission(@NotNull String permName, @NotNull Permission permission) throws RBACException {
+        Permission storePermission = permissionRepository.findByPermName(permName)
+                .orElseThrow(() -> new ValidationException(
+                        "[updatePermission]:    The RBAC permission entity [permName: %s] does not exist".formatted(permName)));
+        String newPermName = permission.getPermName();
+        if (Objects.nonNull(newPermName) && !newPermName.equals(permName)
+                && permissionRepository.findByPermName(newPermName).isPresent()) {
+            throw new ValidationException("[updatePermission]:    The RBAC permission entity [permName: %s ] already exists"
+                    .formatted(newPermName));
+        }
+        BeanUtils.copyProperties(permission, storePermission, "id");
+        return permissionRepository.saveAndFlush(storePermission);
+    }
+
+    @Override
+    public void deletePermission(@NotNull Permission permission) throws RBACException {
+        NaturalKeys.requirePermName(permission);
+        Permission storePermission = permissionRepository.findByPermName(permission.getPermName())
+                .orElseThrow(() -> new ValidationException(
+                        "[deletePermission]:    The RBAC permission entity [permName: %s] does not exist"
+                                .formatted(permission.getPermName())));
+        Map<String, List<Long>> map = new HashMap<>();
+        map.put("permission_id", List.of(storePermission.getId()));
+        try {
+            if (mapMgr.exist(ROLE_PERMISSION, map)) {
+                mapMgr.delete(ROLE_PERMISSION, map);
             }
+        } catch (ServiceException e) {
+            throw rethrow(e);
         }
-        return permissionRepository.saveAndFlush(permission);
+        List<Policy> policies = policyRepository.findByPermNameAndOwnerName(storePermission.getPermName(), null);
+        if (!policies.isEmpty()) {
+            policyRepository.deleteAll(policies);
+        }
+        permissionRepository.delete(storePermission);
+        permissionRepository.flush();
     }
 
     @Override
-    public @NotNull Permission updatePermission(@NotNull Permission permission) throws ServiceException {
-        if (Objects.isNull(permission.getId())) {
-            throw new ValidationException("[updatePermission]:    The RBAC permission  entity is required and cannot be null");
-        }
-        if (permissionRepository.findById(permission.getId()).isEmpty()) {
-            throw new ValidationException(("[updatePermission]:    The RBAC permission entity [id: %s ] is not exist").formatted(permission.getId()));
-        }
-        Set<Resource> resources = permission.getResources();
-        if (Objects.nonNull(resources) && !resources.isEmpty()) {
-            Set<String> resourceName = resources.stream().map(resource -> resource.getClass().getSimpleName()).collect(Collectors.toSet());
-            if (resourceName.size() > 1) {
-                throw new ValidationException(String.format("[updatePermission]: The RBAC permission entity must has " +
-                        "same resource [resource: %s] type set", Arrays.toString(StringUtils.toStringArray(resourceName))));
+    public void grantPermission(@NotNull Permission permission, @NotNull Role role) throws RBACException {
+        PermissionRoleIds ids = resolvePermissionRole(permission, role, "grantPermission");
+        Map<String, List<Long>> map = new HashMap<>();
+        map.put("permission_id", List.of(ids.permissionId()));
+        map.put("role_id", List.of(ids.roleId()));
+        try {
+            if (mapMgr.exist(ROLE_PERMISSION, map)) {
+                throw new ValidationException("[grantPermission]:    The RBAC permission[id: %s] entity has grant to role[id: %s] entity"
+                        .formatted(ids.permissionId(), ids.roleId()));
             }
+            mapMgr.save(ROLE_PERMISSION, map);
+        } catch (ServiceException e) {
+            throw rethrow(e);
         }
-        return permissionRepository.saveAndFlush(permission);
     }
 
     @Override
-    @Transactional
-    public void deletePermission(@NotNull Permission permission) throws ServiceException {
-        if (Objects.isNull(permission.getId())) {
-            throw new ValidationException("[deletePermission]:    The RBAC permission entity's id is required and cannot be null");
-        }
-        Long permissionId = permission.getId();
-
+    public void revokePermission(@NotNull Permission permission, @NotNull Role role) throws RBACException {
+        PermissionRoleIds ids = resolvePermissionRole(permission, role, "revokePermission");
         Map<String, List<Long>> map = new HashMap<>();
-        map.put("permission_id", List.of(permission.getId()));
-        mapMgr.delete(ROLE_PERMISSION, map);
-        permissionRepository.deleteById(permissionId);
-    }
-
-
-    @Override
-    public void grantPermission(@NotNull Permission permission, @NotNull Role role) throws ServiceException {
-        if (Objects.isNull(permission.getId())) {
-            throw new ValidationException("[grantPermission]:    The RBAC permission entity's id is required and cannot null");
+        map.put("permission_id", List.of(ids.permissionId()));
+        map.put("role_id", List.of(ids.roleId()));
+        try {
+            if (!mapMgr.exist(ROLE_PERMISSION, map)) {
+                throw new ValidationException("[revokePermission]:    The RBAC permission[id: %s] entity has revoke from role[id: %s] entity"
+                        .formatted(ids.permissionId(), ids.roleId()));
+            }
+            mapMgr.delete(ROLE_PERMISSION, map);
+        } catch (ServiceException e) {
+            throw rethrow(e);
         }
-        if (Objects.isNull(role.getId())) {
-            throw new ValidationException("[grantPermission]:    The RBAC role entity's id is required and cannot null");
-        }
-        Long permissionId = permission.getId();
-        Long roleId = role.getId();
-        if (!permissionRepository.existsById(permissionId)) {
-            throw new ValidationException(String.format("[grantPermission]:    The RBAC permission[id: %s] entity is not exist", permissionId));
-        }
-        if (!roleRepository.existsById(roleId)) {
-            throw new ValidationException(String.format("[grantPermission]:    The RBAC role[id: %s] entity is not exist", roleId));
-        }
-        Map<String, List<Long>> map = new HashMap<>();
-        map.put("permission_id", List.of(permission.getId()));
-        map.put("role_id", List.of(role.getId()));
-        if (mapMgr.exist(ROLE_PERMISSION, map)) {
-            throw new ValidationException("[grantPermission]:    The RBAC permission[id: %s] entity has grant to role[id: %s] entity".formatted(permissionId, roleId));
-        }
-        mapMgr.save(ROLE_PERMISSION, map);
     }
 
     @Override
-    public void revokePermission(@NotNull Permission permission, @NotNull Role role) throws ServiceException {
-        if (Objects.isNull(permission.getId())) {
-            throw new ValidationException("[revokePermission]:    The RBAC permission entity's id is required and cannot null");
-        }
-        if (Objects.isNull(role.getId())) {
-            throw new ValidationException("[revokePermission]:    The RBAC role entity's id is required and cannot null");
-        }
-        Long permissionId = permission.getId();
-        Long roleId = role.getId();
-        if (!permissionRepository.existsById(permissionId)) {
-            throw new ValidationException(String.format("[revokePermission]:    The RBAC permission[id: %s] entity is not exist", permissionId));
-        }
-        if (!roleRepository.existsById(roleId)) {
-            throw new ValidationException(String.format("[revokePermission]:    The RBAC role[id: %s] entity is not exist", roleId));
+    public void addPermissionPolicy(@NotNull String username, @NotNull String permName, @NotNull Policy policy) throws RBACException {
+        userRepository.findByUsername(username)
+                .orElseThrow(() -> new ValidationException(
+                        "[addPermissionPolicy]: The RBAC user entity [username: %s] does not exist".formatted(username)));
+        permissionRepository.findByPermName(permName)
+                .orElseThrow(() -> new ValidationException(
+                        "[addPermissionPolicy]: The RBAC permission entity [permName: %s] does not exist".formatted(permName)));
+
+        List<Policy> existing = policyRepository.findByPermNameAndOwnerName(permName, username);
+        if (!existing.isEmpty()) {
+            throw new ValidationException("[addPermissionPolicy]: Policy mapping for permission [permName: %s] and user [username: %s] already exists"
+                    .formatted(permName, username));
         }
 
-        Map<String, List<Long>> map = new HashMap<>();
-        map.put("permission_id", List.of(permission.getId()));
-        map.put("role_id", List.of(role.getId()));
-        if (!mapMgr.exist(ROLE_PERMISSION, map)) {
-            throw new ValidationException(("[revokePermission]:    The RBAC permission[id: %s] entity has revoke from role[id: %s] entity").formatted(permissionId, roleId));
+        policy.setPermName(permName);
+        policy.setOwnerName(username);
+        policyRepository.saveAndFlush(policy);
+    }
+
+    @Override
+    public void updatePermissionPolicy(@NotNull String username, @NotNull String permName, @NotNull Policy policy) throws RBACException {
+        userRepository.findByUsername(username)
+                .orElseThrow(() -> new ValidationException(
+                        "[updatePermissionPolicy]: The RBAC user entity [username: %s] does not exist".formatted(username)));
+        permissionRepository.findByPermName(permName)
+                .orElseThrow(() -> new ValidationException(
+                        "[updatePermissionPolicy]: The RBAC permission entity [permName: %s] does not exist".formatted(permName)));
+
+        List<Policy> existing = policyRepository.findByPermNameAndOwnerName(permName, username);
+        if (existing.isEmpty()) {
+            throw new ValidationException(
+                    "[updatePermissionPolicy]: User policy for permission [permName: %s] and user [username: %s] does not exist"
+                            .formatted(permName, username));
         }
-        mapMgr.delete(ROLE_PERMISSION, map);
+
+        Policy existingPolicy = existing.get(0);
+        policy.setId(existingPolicy.getId());
+        policy.setVersion(existingPolicy.getVersion());
+        policy.setPermName(permName);
+        policy.setOwnerName(username);
+        policyRepository.saveAndFlush(policy);
+    }
+
+    @Override
+    public void deletePermissionPolicy(@NotNull String username, @NotNull String permName) throws RBACException {
+        userRepository.findByUsername(username)
+                .orElseThrow(() -> new ValidationException(
+                        "[deletePermissionPolicy]: The RBAC user entity [username: %s] does not exist".formatted(username)));
+        permissionRepository.findByPermName(permName)
+                .orElseThrow(() -> new ValidationException(
+                        "[deletePermissionPolicy]: The RBAC permission entity [permName: %s] does not exist".formatted(permName)));
+
+        List<Policy> policies = policyRepository.findByPermNameAndOwnerName(permName, username);
+        if (!policies.isEmpty()) {
+            policyRepository.deleteAll(policies);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+
+    private record ActorRoleIds(Long actorId, Long roleId) {}
+
+    private record PermissionRoleIds(Long permissionId, Long roleId) {}
+
+    private Actor resolveActor(Actor actor, String op) throws RBACException {
+        if (Objects.nonNull(actor.getId())) {
+            return actorRepository.findById(actor.getId())
+                    .orElseThrow(() -> new ValidationException(
+                            "[%s]:  The RBAC actor[id: %s] does not exist".formatted(op, actor.getId())));
+        }
+        NaturalKeys.requireActorName(actor);
+        return actorRepository.findByActorName(actor.getActorName())
+                .orElseThrow(() -> new ValidationException(
+                        "[%s]:  The RBAC actor[actorName: %s] does not exist".formatted(op, actor.getActorName())));
+    }
+
+    private ActorRoleIds resolveActorRole(Actor actor, Role role, String op) throws RBACException {
+        Long actorId = resolveActor(actor, op).getId();
+        NaturalKeys.requireRoleName(role);
+        Role storeRole = roleRepository.findByRoleName(role.getRoleName())
+                .orElseThrow(() -> new ValidationException(
+                        "[%s]:    The RBAC role[roleName: %s] does not exist".formatted(op, role.getRoleName())));
+        return new ActorRoleIds(actorId, storeRole.getId());
+    }
+
+    private PermissionRoleIds resolvePermissionRole(Permission permission, Role role, String op) throws RBACException {
+        NaturalKeys.requirePermName(permission);
+        NaturalKeys.requireRoleName(role);
+        Permission storePermission = permissionRepository.findByPermName(permission.getPermName())
+                .orElseThrow(() -> new ValidationException(
+                        "[%s]:    The RBAC permission[permName: %s] does not exist".formatted(op, permission.getPermName())));
+        Role storeRole = roleRepository.findByRoleName(role.getRoleName())
+                .orElseThrow(() -> new ValidationException(
+                        "[%s]:    The RBAC role[roleName: %s] does not exist".formatted(op, role.getRoleName())));
+        return new PermissionRoleIds(storePermission.getId(), storeRole.getId());
+    }
+
+    private RBACException rethrow(ServiceException e) {
+        if (e instanceof RBACException rbacException) {
+            return rbacException;
+        }
+        return new RBACException(e.getMessage(), e);
     }
 }

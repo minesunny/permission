@@ -18,6 +18,7 @@
 package com.minesunny.permission.core.entity;
 
 import com.minesunny.jpa.entity.CachedIdEntity;
+import com.minesunny.permission.core.entity.actor.Actor;
 import com.minesunny.permission.core.entity.actor.User;
 import com.minesunny.permission.core.entity.perm.Permission;
 import jakarta.persistence.Table;
@@ -27,7 +28,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import org.hibernate.annotations.*;
+import org.hibernate.annotations.Comment;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.Calendar;
 import java.util.Objects;
@@ -41,11 +46,11 @@ import java.util.Set;
 @Table(name = "t_role")
 @Getter
 @Setter
-@SQLDelete(sql = "update t_role set delete_at = current_timestamp and version = ?1 where id in (?2) and delete_at is null")
-@Where(clause = "delete_at is null")
+@SQLDelete(sql = "update t_role set delete_at = current_timestamp where id = ? and version = ? and delete_at is null")
+@SQLRestriction("delete_at is null")
 public class Role extends CachedIdEntity {
 
-    @Column(name = "role_name")
+    @Column(name = "role_name", unique = true, nullable = false)
     @Comment(value = "role name")
     private String roleName;
 
@@ -53,14 +58,22 @@ public class Role extends CachedIdEntity {
     @Comment(value = "detail description of this role")
     private String description;
 
+    @Column(name = "role_type")
+    @Comment(value = "role type")
+    private String roleType;
+
 
     @ManyToMany
-    @Comment("users has the role")
-    @JoinTable(name = "t_role_user_map",
+    @Comment("actors has the role")
+    @JoinTable(name = "t_role_actor_map",
             joinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"))
+            inverseJoinColumns = @JoinColumn(name = "actor_id", referencedColumnName = "id"))
     @Fetch(FetchMode.SELECT)
-    private Set<User> users;
+    private Set<Actor> actors;
+
+    @ManyToMany(mappedBy = "managedRoles", targetEntity = Actor.class)
+    @Fetch(FetchMode.SELECT)
+    private Set<Actor> managedActors;
 
     @Comment(value = "perms  relate to this role")
     @ManyToMany

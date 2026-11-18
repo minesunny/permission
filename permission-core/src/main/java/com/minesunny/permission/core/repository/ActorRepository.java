@@ -17,8 +17,12 @@
  */
 package com.minesunny.permission.core.repository;
 
-import com.minesunny.permission.core.entity.perm.Operation;
+import com.minesunny.permission.core.entity.actor.Actor;
 import org.springframework.data.jpa.repository.support.JpaRepositoryImplementation;
 
-public interface OperationRepository extends JpaRepositoryImplementation<Operation, Long> {
+import java.util.Optional;
+
+public interface ActorRepository extends JpaRepositoryImplementation<Actor, Long> {
+
+    Optional<Actor> findByActorName(String actorName);
 }

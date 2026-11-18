@@ -18,17 +18,11 @@
  *
  */
 package com.minesunny.permission.core.exception;
+import com.minesunny.permission.core.exception.SecurityException;
 
 
-import org.apache.directory.fortress.core.GlobalErrIds;
-import org.apache.directory.fortress.core.SecurityException;
 
-/**
- * This exception extends {@link org.apache.directory.fortress.core.SecurityException} and is thrown when administrative permission check fails.
- * See the {@link GlobalErrIds} javadoc for list of error ids.
- *
- * @author <a href="mailto:dev@directory.apache.org">Apache Directory Project</a>
- */
+
 public class AuthorizationException extends SecurityException {
     /**
      * Default serialVersionUID
@@ -37,14 +31,10 @@ public class AuthorizationException extends SecurityException {
 
 
     /**
-     * Create an exception with an error code that maps to {@link GlobalErrIds} and message text.
      *
-     * @param errorId see {@link GlobalErrIds} for list of valid error codes that can be set.  Valid values between
-     *                0 &amp; 100_000.
      * @param msg     contains textual information including method of origin and description of the root cause.
      */
     public AuthorizationException(int errorId, String msg) {
-        super(errorId, msg);
-        setHttpStatus(403);
+        super(msg);
     }
 }

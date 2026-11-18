@@ -20,5 +20,10 @@ package com.minesunny.permission.core.repository;
 import com.minesunny.permission.core.entity.actor.Post;
 import org.springframework.data.jpa.repository.support.JpaRepositoryImplementation;
 
+import java.util.Optional;
+
 public interface PostRepository extends JpaRepositoryImplementation<Post, Long> {
+
+    Optional<Post> findByPostName(String postName);
+
 }

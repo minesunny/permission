@@ -27,7 +27,7 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.Date;
 
@@ -35,17 +35,17 @@ import java.util.Date;
 @AllArgsConstructor
 @Entity
 @Table(name = "t_auth_pwd")
-@SQLDelete(sql = "update t_auth_pwd set delete_at = current_timestamp,version = ?1 where id in (?2) and delete_at is null")
-@Where(clause = "delete_at is null")
+@SQLDelete(sql = "update t_auth_pwd set delete_at = current_timestamp where id = ? and version = ? and delete_at is null")
+@SQLRestriction("delete_at is null")
 @Getter
 @Setter
 @SuperBuilder
 public class AuthPwd extends Auth {
 
 
-    @Column(nullable = false)
-    @Comment(value = "用户表uuid")
-    private Long userId;
+    @Column(name = "username", nullable = false, unique = true)
+    @Comment(value = "user login name")
+    private String username;
 
     @Column(nullable = false)
     @Comment(value = "历史密码")
@@ -64,7 +64,7 @@ public class AuthPwd extends Auth {
     @Comment(value = "密码错误次数")
     private short pwdErrorCount;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     @Comment(value = "锁定日期（lockDate为空，即未被锁）")
     private Date lockDate;
 

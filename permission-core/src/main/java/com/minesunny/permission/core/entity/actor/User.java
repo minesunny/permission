@@ -29,6 +29,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.*;
+import jakarta.persistence.DiscriminatorValue;
 
 import java.util.Date;
 import java.util.Set;
@@ -38,11 +39,14 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "t_user")
-@SQLDelete(sql = "update t_user set delete_at = current_timestamp,version = ?1 where id in (?2) and delete_at is null")
-@Where(clause = "delete_at is null")
 @Getter
 @Setter
-public class User extends CachedIdEntity {
+@DiscriminatorValue("user")
+public class User extends Actor {
+
+    @Column(name = "username", unique = true, nullable = false)
+    @Comment(value = "user login name, unique")
+    private String username;
 
 
     @Column(name = "description")
@@ -92,7 +96,4 @@ public class User extends CachedIdEntity {
     @Fetch(FetchMode.SELECT)
     private Post post;
 
-    @ManyToMany(mappedBy = "users", targetEntity = Role.class)
-    @Fetch(FetchMode.SELECT)
-    private Set<Role> roles;
 }

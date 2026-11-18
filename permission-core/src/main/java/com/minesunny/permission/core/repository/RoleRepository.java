@@ -20,7 +20,10 @@ package com.minesunny.permission.core.repository;
 import com.minesunny.permission.core.entity.Role;
 import org.springframework.data.jpa.repository.support.JpaRepositoryImplementation;
 
+import java.util.Optional;
+
 public interface RoleRepository extends JpaRepositoryImplementation<Role, Long> {
 
+    Optional<Role> findByRoleName(String roleName);
 
 }

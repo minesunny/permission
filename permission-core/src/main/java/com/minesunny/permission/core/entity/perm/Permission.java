@@ -27,7 +27,7 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.Set;
 
@@ -38,12 +38,12 @@ import java.util.Set;
 @Getter
 @Setter
 @SuperBuilder
-@SQLDelete(sql = "update t_permission set delete_at = current_timestamp,version = ?1 where id in (?2) and delete_at is null")
-@Where(clause = "delete_at is null")
+@SQLDelete(sql = "update t_permission set delete_at = current_timestamp where id = ? and version = ? and delete_at is null")
+@SQLRestriction("delete_at is null")
 public class Permission extends CachedIdEntity {
 
 
-    @Column(name = "perm_name")
+    @Column(name = "perm_name", unique = true, nullable = false)
     @Comment(value = "perm name")
     private String permName;
 
@@ -51,19 +51,13 @@ public class Permission extends CachedIdEntity {
     @Comment(value = "detail description of this perm")
     private String description;
 
+    @Column(name = "resource")
     @Comment(value = "permission resource")
-    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
-    @JoinTable(name = "t_permission_resource_map",
-            joinColumns = @JoinColumn(name = "permission_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "resource_id", referencedColumnName = "id"))
-    private Set<Resource> resources;
+    private String resource;
 
+    @Column(name = "operation")
     @Comment(value = "define what operation of the resource")
-    @ManyToMany
-    @JoinTable(name = "t_permission_operation_map",
-            joinColumns = @JoinColumn(name = "permission_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "operation_id", referencedColumnName = "id"))
-    private Set<Operation> operations;
+    private String operation;
 
     @Column(name = "perm_type")
     @Comment(value = "perm type")
@@ -73,4 +67,9 @@ public class Permission extends CachedIdEntity {
             targetEntity = Role.class)
     private Set<Role> roles;
 
+    @Transient
+    private Policy policy;
+
+    @Transient
+    private String policyOwnerName;
 }

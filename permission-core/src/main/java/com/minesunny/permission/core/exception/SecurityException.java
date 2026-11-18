@@ -20,10 +20,10 @@
 package com.minesunny.permission.core.exception;
 
 
-import com.minesunny.jpa.exception.ServiceException;
+import com.minesunny.permission.core.exception.RBACException;
 
 
-public class SecurityException extends ServiceException {
+public class SecurityException extends RBACException {
     /**
      * Default serialVersionUID
      */
