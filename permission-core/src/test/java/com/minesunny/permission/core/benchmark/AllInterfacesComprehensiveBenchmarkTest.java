@@ -16,10 +16,18 @@ import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.annotation.Commit;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Set;
 
@@ -29,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * 全量 5 大业务管理器（AdminMgr, ReviewMgr, SessionMgr, SoDMgr, OrgMgr）系统接口基准测试套件。
  * 覆盖全部 100% 对外暴露的业务接口方法，生成结构化性能指标报告。
  */
+@Testcontainers
 @DataJpaTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -36,15 +45,49 @@ import static org.junit.jupiter.api.Assertions.*;
 @ImportAutoConfiguration({PermissionAutoConfiguration.class, BaseJpaAutoConfiguration.class})
 @TestPropertySource(properties = {
         "spring.datasource.driver-class-name=org.postgresql.Driver",
-        "spring.datasource.url=jdbc:postgresql://localhost:5432/postgres?currentSchema=query",
-        "spring.datasource.username=postgres",
-        "spring.datasource.password=postgres",
         "spring.jpa.database=postgresql",
         "spring.jpa.hibernate.ddl-auto=create-drop",
         "spring.jpa.show-sql=false",
         "logging.level.org.hibernate.SQL=ERROR"
 })
 class AllInterfacesComprehensiveBenchmarkTest {
+
+    @Container
+    private static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
+            .withDatabaseName("postgres")
+            .withUsername("postgres")
+            .withPassword("postgres");
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        boolean containerStarted = false;
+        try {
+            if (postgres.isCreated() || postgres.isRunning()) {
+                containerStarted = true;
+            } else {
+                postgres.start();
+                containerStarted = true;
+            }
+        } catch (Throwable t) {
+            System.err.println("Testcontainers PostgreSQL could not start, falling back to local postgres: " + t.getMessage());
+        }
+
+        if (containerStarted && postgres.isRunning()) {
+            try (Connection conn = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
+                 Statement stmt = conn.createStatement()) {
+                stmt.execute("CREATE SCHEMA IF NOT EXISTS query;");
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to initialize postgres schema in container", e);
+            }
+            registry.add("spring.datasource.url", () -> postgres.getJdbcUrl() + "&currentSchema=query");
+            registry.add("spring.datasource.username", postgres::getUsername);
+            registry.add("spring.datasource.password", postgres::getPassword);
+        } else {
+            registry.add("spring.datasource.url", () -> "jdbc:postgresql://localhost:5432/postgres?currentSchema=query");
+            registry.add("spring.datasource.username", () -> "postgres");
+            registry.add("spring.datasource.password", () -> "postgres");
+        }
+    }
 
     @Autowired
     private AdminMgr adminMgr;
