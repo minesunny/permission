@@ -6,6 +6,7 @@ plugins {
 allprojects {
     repositories {
         mavenLocal()
+        maven { url = uri("${rootDir}/repo") }
         maven { url = uri("https://maven.aliyun.com/nexus/content/groups/public") }
         maven {
             url = uri("https://packages.aliyun.com/6125a66357e7cd986dfac90b/maven/2131514-release-kucx67")
