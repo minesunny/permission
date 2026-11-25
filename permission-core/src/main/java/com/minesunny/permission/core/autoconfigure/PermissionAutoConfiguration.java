@@ -21,24 +21,36 @@ package com.minesunny.permission.core.autoconfigure;
 import jakarta.persistence.EntityManager;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @AutoConfiguration(before = HibernateJpaAutoConfiguration.class)
 @ConditionalOnClass({EntityManager.class})
 @Import(PermissionAutoConfiguration.PermissionConfiguration.class)
-
 public class PermissionAutoConfiguration {
 
-    @ComponentScan({"com.minesunny.permission.core.manager"})
+    @ComponentScan({"com.minesunny.permission.core.manager", "com.minesunny.permission.core.i18n"})
     @EntityScan({"com.minesunny.permission.core.entity"})
     @EnableJpaRepositories({"com.minesunny.permission.core.repository"})
     @Configuration
     static class PermissionConfiguration {
 
+        @Bean("rbacMessageSource")
+        @ConditionalOnMissingBean(name = "rbacMessageSource")
+        public ResourceBundleMessageSource rbacMessageSource() {
+            ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
+            messageSource.setBasename("i18n/rbac-messages");
+            messageSource.setDefaultEncoding("UTF-8");
+            messageSource.setFallbackToSystemLocale(false);
+            messageSource.setUseCodeAsDefaultMessage(false);
+            return messageSource;
+        }
     }
 }

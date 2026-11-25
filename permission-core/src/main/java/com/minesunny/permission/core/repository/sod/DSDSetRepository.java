@@ -15,12 +15,18 @@
  *
  *
  */
-package com.minesunny.permission.core.type;
+package com.minesunny.permission.core.repository.sod;
 
-public enum OrgType {
-    COMPANY,
-    SUB_COMPANY,
-    DEPT,
-    GROUP,
-    USER
+import com.minesunny.permission.core.entity.sod.DSDSet;
+import org.springframework.data.jpa.repository.support.JpaRepositoryImplementation;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+@Repository
+public interface DSDSetRepository extends JpaRepositoryImplementation<DSDSet, Long> {
+
+    Optional<DSDSet> findByName(String name);
+
+    boolean existsByName(String name);
 }

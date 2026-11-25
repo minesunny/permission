@@ -18,9 +18,8 @@
 package com.minesunny.permission.core.type;
 
 import com.minesunny.permission.core.entity.Role;
-import com.minesunny.permission.core.entity.actor.OrgUnit;
-import com.minesunny.permission.core.entity.actor.Post;
 import com.minesunny.permission.core.entity.actor.Actor;
+import com.minesunny.permission.core.entity.actor.Department;
 import com.minesunny.permission.core.entity.actor.User;
 import com.minesunny.permission.core.entity.perm.Permission;
 
@@ -29,24 +28,17 @@ public interface RBACEntityConstants {
     Role NOT_EXIST_ROLE = Role.builder().roleName("notExistRole").build();
 
     Role ROLE = new Role();
-    User NOT_EXIST_USER = User.builder().username("notExistUser").build();
+    User NOT_EXIST_USER = User.builder().actorName("notExistUser").username("notExistUser").build();
     User USER = new User();
 
     /** Empty Actor (no actorName) used to verify that readActor() throws on missing natural key. */
     Actor ACTOR = new User();
 
-    OrgUnit NOT_EXIST_ORG_UNIT = OrgUnit.builder().orgName("notExistOrgUnit").build();
+    Department NOT_EXIST_DEPARTMENT = Department.builder().actorName("notExistDept").deptName("notExistDept").build();
 
-    OrgUnit ORG_UNIT = new OrgUnit();
-
+    Department DEPARTMENT = new Department();
 
     Permission NOT_EXIST_PERMISSION = Permission.builder().permName("notExistPerm").build();
 
-
     Permission PERMISSION = new Permission();
-
-
-    Post NOT_EXIST_POST = Post.builder().postName("notExistPost").build();
-
-    Post POST = new Post();
 }

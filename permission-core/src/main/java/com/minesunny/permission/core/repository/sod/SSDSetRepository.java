@@ -15,15 +15,18 @@
  *
  *
  */
-package com.minesunny.permission.core.repository;
+package com.minesunny.permission.core.repository.sod;
 
-import com.minesunny.permission.core.entity.actor.OrgUnit;
+import com.minesunny.permission.core.entity.sod.SSDSet;
 import org.springframework.data.jpa.repository.support.JpaRepositoryImplementation;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
-public interface OrgRepository extends JpaRepositoryImplementation<OrgUnit, Long> {
+@Repository
+public interface SSDSetRepository extends JpaRepositoryImplementation<SSDSet, Long> {
 
-    Optional<OrgUnit> findByOrgName(String orgName);
+    Optional<SSDSet> findByName(String name);
 
+    boolean existsByName(String name);
 }
