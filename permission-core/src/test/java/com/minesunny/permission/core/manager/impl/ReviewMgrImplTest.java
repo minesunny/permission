@@ -6,8 +6,7 @@ import com.minesunny.permission.core.entity.Role;
 import com.minesunny.permission.core.entity.actor.Actor;
 import com.minesunny.permission.core.entity.actor.User;
 import com.minesunny.permission.core.entity.perm.Permission;
-import com.minesunny.permission.core.exception.RBACException;
-import com.minesunny.permission.core.exception.ValidationException;
+import com.minesunny.permission.core.exception.*;
 import com.minesunny.permission.core.manager.AdminMgr;
 import com.minesunny.permission.core.manager.ReviewMgr;
 import com.minesunny.permission.core.type.RBACEntityConstants;
@@ -47,8 +46,8 @@ class ReviewMgrImplTest {
     @Test
     @Commit
     void testReadActor() throws RBACException {
-        // Empty actor (no actorName) → requireActorName throws ValidationException
-        assertThrows(ValidationException.class, () -> reviewMgr.readActor(RBACEntityConstants.ACTOR));
+        // Empty actor (no actorName) → requireActorName throws RBACValidationException
+        assertThrows(RBACValidationException.class, () -> reviewMgr.readActor(RBACEntityConstants.ACTOR));
 
         User user = User.builder()
                 .actorName("rev-readActor")
@@ -57,17 +56,25 @@ class ReviewMgrImplTest {
                 .build();
         Actor saved = adminMgr.addActor(user);
 
-        Optional<Actor> readActor = reviewMgr.readActor(saved);
-        assertTrue(readActor.isPresent());
+        Actor readActor = reviewMgr.readActor(saved);
+        assertNotNull(readActor);
         // JPA JOINED inheritance returns the concrete subtype; cast is safe
-        assertEquals("test readActor", ((User) readActor.get()).getDescription());
+        assertEquals("test readActor", ((User) readActor).getDescription());
+
+        // findActor & not found tests
+        assertNotNull(reviewMgr.findActor(saved));
+        assertNotNull(reviewMgr.findActor("rev-readActor"));
+        assertNull(reviewMgr.findActor("not-exist-actor-xyz"));
+        assertNull(reviewMgr.findActor(User.builder().actorName("not-exist-actor-xyz").build()));
+        assertThrows(RBACNotFoundException.class, () -> reviewMgr.readActor("not-exist-actor-xyz"));
+        assertThrows(RBACNotFoundException.class, () -> reviewMgr.readActor(User.builder().actorName("not-exist-actor-xyz").build()));
     }
 
     @Test
     @Commit
     void testReadActors() throws RBACException {
-        // No search condition → ValidationException
-        assertThrows(ValidationException.class, () -> reviewMgr.readActors(RBACEntityConstants.ACTOR));
+        // No search condition → returns empty list
+        assertTrue(reviewMgr.readActors(RBACEntityConstants.ACTOR).isEmpty());
 
         adminMgr.addActor(User.builder().actorName("rev-readActors-1").username("rev-readActors-1").build());
         adminMgr.addActor(User.builder().actorName("rev-readActors-2").username("rev-readActors-2").build());
@@ -83,12 +90,20 @@ class ReviewMgrImplTest {
     @Test
     @Commit
     void testReadRole() throws RBACException {
-        assertThrows(ValidationException.class, () -> reviewMgr.readRole(RBACEntityConstants.ROLE));
+        assertThrows(RBACValidationException.class, () -> reviewMgr.readRole(RBACEntityConstants.ROLE));
         Role role = Role.builder().roleName("rev-readRole").description("test testReadRole").build();
 
-        Optional<Role> readRole = reviewMgr.readRole(adminMgr.addRole(role));
-        assertTrue(readRole.isPresent());
-        assertEquals("test testReadRole", readRole.get().getDescription());
+        Role readRole = reviewMgr.readRole(adminMgr.addRole(role));
+        assertNotNull(readRole);
+        assertEquals("test testReadRole", readRole.getDescription());
+
+        // findRole & not found tests
+        assertNotNull(reviewMgr.findRole(role));
+        assertNotNull(reviewMgr.findRole("rev-readRole"));
+        assertNull(reviewMgr.findRole("not-exist-role-xyz"));
+        assertNull(reviewMgr.findRole(Role.builder().roleName("not-exist-role-xyz").build()));
+        assertThrows(RBACNotFoundException.class, () -> reviewMgr.readRole("not-exist-role-xyz"));
+        assertThrows(RBACNotFoundException.class, () -> reviewMgr.readRole(Role.builder().roleName("not-exist-role-xyz").build()));
 
         role.andEq("description");
         List<Role> roles = reviewMgr.readRoles(role);
@@ -99,7 +114,7 @@ class ReviewMgrImplTest {
     @Test
     @Commit
     void testReadRoles() throws RBACException {
-        assertThrows(ValidationException.class, () -> reviewMgr.readRoles(RBACEntityConstants.ROLE));
+        assertTrue(reviewMgr.readRoles(RBACEntityConstants.ROLE).isEmpty());
         adminMgr.addRole(Role.builder().roleName("rev-readRoles-1").description("abcdefg").build());
         adminMgr.addRole(Role.builder().roleName("rev-readRoles-2").description("abc").build());
 
@@ -113,12 +128,20 @@ class ReviewMgrImplTest {
     @Test
     @Commit
     void testReadPermission() throws RBACException {
-        assertThrows(ValidationException.class, () -> reviewMgr.readPermission(RBACEntityConstants.PERMISSION));
+        assertThrows(RBACValidationException.class, () -> reviewMgr.readPermission(RBACEntityConstants.PERMISSION));
         Permission permission = Permission.builder().permName("rev-readPerm").description("test testReadPermission").build();
 
-        Optional<Permission> readPermission = reviewMgr.readPermission(adminMgr.addPermission(permission));
-        assertTrue(readPermission.isPresent());
-        assertEquals("test testReadPermission", readPermission.get().getDescription());
+        Permission readPermission = reviewMgr.readPermission(adminMgr.addPermission(permission));
+        assertNotNull(readPermission);
+        assertEquals("test testReadPermission", readPermission.getDescription());
+
+        // findPermission & not found tests
+        assertNotNull(reviewMgr.findPermission(permission));
+        assertNotNull(reviewMgr.findPermission("rev-readPerm"));
+        assertNull(reviewMgr.findPermission("not-exist-perm-xyz"));
+        assertNull(reviewMgr.findPermission(Permission.builder().permName("not-exist-perm-xyz").build()));
+        assertThrows(RBACNotFoundException.class, () -> reviewMgr.readPermission("not-exist-perm-xyz"));
+        assertThrows(RBACNotFoundException.class, () -> reviewMgr.readPermission(Permission.builder().permName("not-exist-perm-xyz").build()));
 
         permission.andEq("description");
         List<Permission> permissions = reviewMgr.readPermissions(permission);
@@ -129,7 +152,7 @@ class ReviewMgrImplTest {
     @Test
     @Commit
     void testReadPermissions() throws RBACException {
-        assertThrows(ValidationException.class, () -> reviewMgr.readPermission(RBACEntityConstants.PERMISSION));
+        assertTrue(reviewMgr.readPermissions(RBACEntityConstants.PERMISSION).isEmpty());
         adminMgr.addPermission(Permission.builder().permName("rev-readPerms-1").description("abcdefg").build());
         adminMgr.addPermission(Permission.builder().permName("rev-readPerms-2").description("abc").build());
 
@@ -242,41 +265,63 @@ class ReviewMgrImplTest {
     }
 
     // ------------------------------------------------------------------
-    // managedRoles / managedPermissions / hasManagedRole / hasManagedPermission
+    // readUser / readUsers
     // ------------------------------------------------------------------
     @Test
     @Commit
-    void testManagedRolesAndHasManagedRoleAndPermission() throws RBACException {
-        User user = newUser("rev-managedRoles-user");
-        Role role = adminMgr.addRole(Role.builder().roleName("rev-managedRole-target").build());
-        Permission perm = adminMgr.addPermission(Permission.builder().permName("rev-managedPerm-target").build());
+    void testReadUserAndUsers() throws RBACException {
+        // 空对象：单个查询抛异常，复数查询返回空列表
+        assertThrows(RBACValidationException.class, () -> reviewMgr.readUser(RBACEntityConstants.USER));
+        assertTrue(reviewMgr.readUsers(RBACEntityConstants.USER).isEmpty());
+
+        User user1 = adminMgr.addUser(User.builder().username("rev-u1").email("u1@test.com").build());
+        User user2 = adminMgr.addUser(User.builder().username("rev-u2").email("u2@test.com").build());
+
+        // 按用户名查询
+        User readByName = reviewMgr.readUser("rev-u1");
+        assertNotNull(readByName);
+        assertEquals("u1@test.com", readByName.getEmail());
+
+        // 按用户实体查询
+        User readByEntity = reviewMgr.readUser(user2);
+        assertNotNull(readByEntity);
+        assertEquals("u2@test.com", readByEntity.getEmail());
+
+        // findUser & not found tests
+        assertNotNull(reviewMgr.findUser("rev-u1"));
+        assertNotNull(reviewMgr.findUser(user2));
+        assertNull(reviewMgr.findUser("not-exist-user-xyz"));
+        assertNull(reviewMgr.findUser(User.builder().username("not-exist-user-xyz").build()));
+        assertThrows(RBACNotFoundException.class, () -> reviewMgr.readUser("not-exist-user-xyz"));
+        assertThrows(RBACNotFoundException.class, () -> reviewMgr.readUser(User.builder().username("not-exist-user-xyz").build()));
+
+        // 条件列表查询
+        List<User> list = reviewMgr.readUsers(User.builder().username("rev-u").build().like("username", true));
+        assertEquals(2, list.size());
+    }
+
+    // ------------------------------------------------------------------
+    // permissionRoles / permissionActors
+    // ------------------------------------------------------------------
+    @Test
+    @Commit
+    void testPermissionRolesAndActors() throws RBACException {
+        Role role = adminMgr.addRole(Role.builder().roleName("rev-permRoles-role").build());
+        Permission perm = adminMgr.addPermission(Permission.builder().permName("rev-permRoles-p1").build());
+        User user = newUser("rev-permRoles-user");
+
         adminMgr.grantPermission(perm, role);
+        adminMgr.assignActor(user, role);
 
-        assertTrue(reviewMgr.managedRoles(user).isEmpty());
-        assertTrue(reviewMgr.managedPermissions(user).isEmpty());
-        assertFalse(reviewMgr.hasManagedRole(user, role));
-        assertFalse(reviewMgr.hasManagedPermission(user, perm));
+        // 使用仅包含 permName 的非托管 Permission 对象查询角色
+        Permission unmanagedPerm = Permission.builder().permName("rev-permRoles-p1").build();
+        List<Role> roles = reviewMgr.permissionRoles(unmanagedPerm);
+        assertEquals(1, roles.size());
+        assertEquals("rev-permRoles-role", roles.get(0).getRoleName());
 
-        adminMgr.assignManagedRole(user, role);
-
-        List<Role> mRoles = reviewMgr.managedRoles(user);
-        assertEquals(1, mRoles.size());
-        assertEquals("rev-managedRole-target", mRoles.get(0).getRoleName());
-
-        List<Permission> mPerms = reviewMgr.managedPermissions(user);
-        assertEquals(1, mPerms.size());
-        assertEquals("rev-managedPerm-target", mPerms.get(0).getPermName());
-
-        assertTrue(reviewMgr.hasManagedRole(user, role));
-        assertTrue(reviewMgr.hasManagedPermission(user, perm));
-        // Backward-compatible deprecated methods
-        assertTrue(reviewMgr.hasManageRole(user, role));
-        assertTrue(reviewMgr.hasManagePermission(user, perm));
-
-        adminMgr.deassignManagedRole(user, role);
-        assertTrue(reviewMgr.managedRoles(user).isEmpty());
-        assertTrue(reviewMgr.managedPermissions(user).isEmpty());
-        assertFalse(reviewMgr.hasManagedRole(user, role));
-        assertFalse(reviewMgr.hasManagedPermission(user, perm));
+        // 查询拥有该权限的所有参与者
+        List<Actor> actors = reviewMgr.permissionActors(unmanagedPerm);
+        assertEquals(1, actors.size());
+        assertEquals("rev-permRoles-user", actors.get(0).getActorName());
     }
 }

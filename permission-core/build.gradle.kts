@@ -28,6 +28,7 @@ tasks.withType<Javadoc> {
 dependencyManagement {
     imports {
         mavenBom("org.springframework.boot:spring-boot-dependencies:${property("springBootVersion")}")
+        mavenBom("org.testcontainers:testcontainers-bom:1.20.4")
     }
 }
 
@@ -47,7 +48,19 @@ dependencies {
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("com.h2database:h2:${property("h2Version")}")
+    testImplementation("org.postgresql:postgresql:42.7.4")
+    testImplementation(platform("org.testcontainers:testcontainers-bom:1.20.4"))
+    testImplementation("org.testcontainers:postgresql")
+    testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("com.minesunny.jpa:base-jpa:${property("baseJpaVersion")}")
+}
+
+configurations.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "org.testcontainers") {
+            useVersion("1.20.4")
+        }
+    }
 }
 
 tasks.test {

@@ -17,8 +17,41 @@
  */
 package com.minesunny.permission.core.exception;
 
-public class ValidationException extends SecurityException {
+/**
+ * 参数校验异常（历史兼容类）。
+ *
+ * @deprecated 建议优先使用语义更明确的现代异常：
+ * <ul>
+ *   <li>{@link RBACValidationException} - 参数与格式非法</li>
+ *   <li>{@link RBACNotFoundException} - 实体或资源不存在</li>
+ *   <li>{@link RBACConflictException} - 业务标识重复或关系冲突</li>
+ *   <li>{@link RBACTopologyException} - 组织树拓扑与自环异常</li>
+ * </ul>
+ */
+@Deprecated
+public class ValidationException extends RBACValidationException {
+
     public ValidationException(String msg) {
         super(msg);
+    }
+
+    public ValidationException(String msg, Throwable cause) {
+        super(msg, cause);
+    }
+
+    public ValidationException(String messageKey, Object... args) {
+        super(messageKey, args);
+    }
+
+    public ValidationException(String messageKey, Throwable cause, Object... args) {
+        super(messageKey, cause, args);
+    }
+
+    public ValidationException(String messageKey, Object[] args, String defaultMessage) {
+        super(messageKey, args, defaultMessage);
+    }
+
+    public ValidationException(String messageKey, Object[] args, String defaultMessage, Throwable cause) {
+        super(messageKey, args, defaultMessage, cause);
     }
 }

@@ -17,18 +17,22 @@
  */
 package com.minesunny.permission.core.type;
 
+/**
+ * 关联映射表表名常量定义接口。
+ */
 public interface MapTableConstants {
+    /** 角色与参与者映射表 */
     String ROLE_ACTOR = "t_role_actor_map";
 
-    String ORG_UNIT_USER = "t_org_unit_user_map";
+    /** 部门与用户映射表 */
+    String DEPARTMENT_USER = "t_department_user_map";
 
-    String USER_ORG_UNIT = "t_user_org_unit_map";
-
+    /** 角色与权限映射表 */
     String ROLE_PERMISSION = "t_role_permission_map";
 
-    String POST_USER = "t_post_user_map";
+    /** 角色继承层次偏序映射表 (Role Hierarchy) */
+    String ROLE_HIERARCHY = "t_role_hierarchy_map";
 
-    String PERMISSION_POLICY = "t_permission_policy_map";
-
-    String MANAGED_ROLE_ACTOR = "t_managed_role_actor_map";
+    /** 职责分离约束与角色关联映射表 (SoD-Role Map) */
+    String SOD_ROLE = "t_sod_role_map";
 }
