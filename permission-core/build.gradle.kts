@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.minesunny.permission"
-version = "1.0-SNAPSHOT"
+version = "1.0.0"
 
 java {
     toolchain {
